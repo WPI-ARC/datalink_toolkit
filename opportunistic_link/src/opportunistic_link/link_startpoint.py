@@ -27,14 +27,14 @@ class LinkStartPoint:
             rospy.spin()
 
     def link_cb(self, request):
-        if (request.Forward == True):
+        if (request.Forward.data == True):
             self.forward = True
             rospy.loginfo("Set forwarding to TRUE")
-        else:
+        elif (request.Forward.data == False):
             self.forward = False
             rospy.loginfo("Set forwarding to FALSE")
         response = LinkControlResponse()
-        response.State = self.forward
+        response.State.data = self.forward
         return response
 
     def sub_cb(self, msg):
@@ -54,7 +54,7 @@ class LinkStartPoint:
 
 if __name__ == '__main__':
     rospy.init_node('link_startpoint')
-    topic_name = rospy.get_param("~topic_name", "test")
+    topic_name = rospy.get_param("~topic_name", "robot/test")
     topic_type = rospy.get_param("~topic_type", "std_msgs/String")
     transport_namespace = rospy.get_param("~transport_namespace", "opportunistic_link")
     LinkStartPoint(topic_name, topic_type, transport_namespace)

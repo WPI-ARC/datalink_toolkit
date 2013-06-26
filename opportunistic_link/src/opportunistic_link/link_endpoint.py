@@ -41,20 +41,20 @@ class LinkEndPoint:
         while not rospy.is_shutdown():
             rospy.spin()
 
-    def sub_connect(self, num_subscibers):
+    def sub_connect(self, num_subscribers):
         if (num_subscribers > 1):
             rospy.loginfo("Additional subscriber connected, no need to change link state")
         elif (num_subscribers > 0):
             link_change = LinkControlRequest()
-            link_change.Forward = False
+            link_change.Forward.data = True
             rospy.loginfo("First subscriber connected, starting link data flow...")
             self.client.call(link_change)
             rospy.loginfo("...link data flow started")
 
-    def sub_disconnect(self, num_subscibers):
+    def sub_disconnect(self, num_subscribers):
         if (num_subscribers < 1):
             link_change = LinkControlRequest()
-            link_change.Forward = False
+            link_change.Forward.data = False
             rospy.loginfo("Last subscriber disconnected, stopping link data flow...")
             self.client.call(link_change)
             rospy.loginfo("...link data flow stopped")
@@ -74,7 +74,7 @@ class LinkEndPoint:
 
 if __name__ == '__main__':
     rospy.init_node('link_endpoint')
-    topic_name = rospy.get_param("~topic_name", "test")
+    topic_name = rospy.get_param("~topic_name", "workstation/test")
     topic_type = rospy.get_param("~topic_type", "std_msgs/String")
     transport_namespace = rospy.get_param("~transport_namespace", "opportunistic_link")
     LinkEndPoint(topic_name, topic_type, transport_namespace)
