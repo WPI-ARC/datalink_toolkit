@@ -39,7 +39,7 @@ class LinkStartPoint:
 
     def sub_cb(self, msg):
         if (self.forward):
-            rospy.loginfo("Forwarding message data")
+            rospy.logdebug("Forwarding message data")
             self.publisher.publish(msg)
 
     def extract_type_and_package(self, input_topic_type):
