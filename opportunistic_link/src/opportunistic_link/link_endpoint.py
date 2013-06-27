@@ -34,6 +34,11 @@ class LinkEndPoint:
         self.transport_namespace = transport_namespace
         self.topic_name = topic_name
         self.client = rospy.ServiceProxy(transport_namespace + "/link_control", LinkControl)
+        link_change = LinkControlRequest()
+        link_change.Forward = False
+        rospy.loginfo("Setting transport link state...")
+        self.client.call(link_change)
+        rospy.loginfo("...link state set")
         self.subscriber = rospy.Subscriber(transport_namespace + "/link_data", eval(self.topic_type), self.sub_cb)
         self.subscriber_handler = SubscribeHandler(self.sub_connect, self.sub_disconnect)
         self.publisher = rospy.Publisher(self.topic_name, eval(self.topic_type), self.subscriber_handler)
@@ -46,7 +51,7 @@ class LinkEndPoint:
             rospy.loginfo("Additional subscriber connected, no need to change link state")
         elif (num_subscribers > 0):
             link_change = LinkControlRequest()
-            link_change.Forward.data = True
+            link_change.Forward = True
             rospy.loginfo("First subscriber connected, starting link data flow...")
             self.client.call(link_change)
             rospy.loginfo("...link data flow started")
@@ -54,7 +59,7 @@ class LinkEndPoint:
     def sub_disconnect(self, num_subscribers):
         if (num_subscribers < 1):
             link_change = LinkControlRequest()
-            link_change.Forward.data = False
+            link_change.Forward = False
             rospy.loginfo("Last subscriber disconnected, stopping link data flow...")
             self.client.call(link_change)
             rospy.loginfo("...link data flow stopped")

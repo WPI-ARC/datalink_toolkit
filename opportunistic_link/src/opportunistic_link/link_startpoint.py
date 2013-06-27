@@ -10,6 +10,21 @@ import rospy
 from std_msgs.msg import *
 from opportunistic_link.srv import *
 
+class SubscribeHandler:
+
+    def __init__(self, connect_cb, disconnect_cb):
+        self.connect_cb = connect_cb
+        self.disconnect_cb = disconnect_cb
+        self.num_subscribers = 0
+
+    def peer_subscribe(self, topic_name, topic_publish, peer_publish):
+        self.num_subscribers += 1
+        self.connect_cb(self.num_subscribers)
+
+    def peer_unsubscribe(self, topic_name, num_peers):
+        self.num_subscribers += -1
+        self.disconnect_cb(self.num_subscribers)
+
 class LinkStartPoint:
 
     def __init__(self, topic_name, input_topic_type, transport_namespace):
@@ -20,21 +35,33 @@ class LinkStartPoint:
         self.topic_name = topic_name
         self.forward = False
         self.server = rospy.Service(transport_namespace + "/link_control", LinkControl, self.link_cb)
-        self.publisher = rospy.Publisher(transport_namespace + "/link_data", eval(self.topic_type))
+        self.subscriber_handler = SubscribeHandler(self.sub_connect, self.sub_disconnect)
+        self.publisher = rospy.Publisher(transport_namespace + "/link_data", eval(self.topic_type), self.subscriber_handler)
         self.subscriber = rospy.Subscriber(self.topic_name, eval(self.topic_type), self.sub_cb)
         rospy.loginfo("...LinkStartPoint loaded")
         while not rospy.is_shutdown():
             rospy.spin()
 
+    def sub_connect(self, num_subscribers):
+        if (num_subscribers > 1):
+            rospy.logerr("Multiple subscribers to the transport datalink. This is not safe behavior!")
+        elif (num_subscribers > 0):
+            rospy.loginfo("Link endpoint connected")
+
+    def sub_disconnect(self, num_subscribers):
+        if (num_subscribers < 1):
+            self.forward = False
+            rospy.loginfo("Link endpoint disconnected")
+
     def link_cb(self, request):
-        if (request.Forward.data == True):
+        if (request.Forward == True):
             self.forward = True
             rospy.loginfo("Set forwarding to TRUE")
-        elif (request.Forward.data == False):
+        elif (request.Forward == False):
             self.forward = False
             rospy.loginfo("Set forwarding to FALSE")
         response = LinkControlResponse()
-        response.State.data = self.forward
+        response.State = self.forward
         return response
 
     def sub_cb(self, msg):
