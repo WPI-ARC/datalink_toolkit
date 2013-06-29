@@ -15,8 +15,9 @@ import message_demultiplexer
 
 class MessageDemulitplexer:
 
-    def __init__(self, aggregated_topic_in):
+    def __init__(self, aggregated_topic_in, namespace):
         self.topic_pubs = {}
+        self.namespace = namespace
         self.imported_packages = ["std_msgs", "teleop_msgs"]
         self.subscriber = rospy.Subscriber(aggregated_topic_in, AggregatedMessages, self.sub_cb)
         rospy.loginfo("Loaded Demultiplexer+Deserializer")
@@ -26,31 +27,32 @@ class MessageDemulitplexer:
     def sub_cb(self, msg):
         for message in msg.Messages:
             [topic_type, topic_package] = self.extract_type_and_package(message.TopicType)
-            if (message.TopicName in self.topic_pubs):
+            full_topic_name = self.namespace + "/" + message.TopicName
+            if (full_topic_name in self.topic_pubs):
                 try:
                     new_msg = eval(topic_type)()
                     new_msg.deserialize(message.SerializedMessageData)
-                    self.topic_pubs[message.TopicName].publish(new_msg)
+                    self.topic_pubs[full_topic_name].publish(new_msg)
                 except:
-                    rospy.logerr("Could not deserialize/republish message on " + message.TopicName + " of type " + message.TopicType + " using existing publisher")
+                    rospy.logerr("Could not deserialize/republish message on " + full_topic_name + " of type " + message.TopicType + " using existing publisher")
             elif (topic_package in self.imported_packages):
                 try:
-                    self.topic_pubs[message.TopicName] = rospy.Publisher(message.TopicName, eval(topic_type))
+                    self.topic_pubs[full_topic_name] = rospy.Publisher(full_topic_name, eval(topic_type))
                     new_msg = eval(topic_type)()
                     new_msg.deserialize(message.SerializedMessageData)
-                    self.topic_pubs[message.TopicName].publish(new_msg)
+                    self.topic_pubs[full_topic_name].publish(new_msg)
                 except:
-                    rospy.logerr("Could not deserialize/republish message on " + message.TopicName + " of type " + message.TopicType + " using new publisher")
+                    rospy.logerr("Could not deserialize/republish message on " + full_topic_name + " of type " + message.TopicType + " using new publisher")
             else:
                 try:
                     self.dynamic_load(topic_package)
                     self.imported_packages.append(topic_package)
-                    self.topic_pubs[message.TopicName] = rospy.Publisher(message.TopicName, eval(topic_type))
+                    self.topic_pubs[full_topic_name] = rospy.Publisher(full_topic_name, eval(topic_type))
                     new_msg = eval(topic_type)()
                     new_msg.deserialize(message.SerializedMessageData)
-                    self.topic_pubs[message.TopicName].publish(new_msg)
+                    self.topic_pubs[full_topic_name].publish(new_msg)
                 except:
-                    rospy.logerr("Could not import/deserialize/republish message on " + message.TopicName + " of type " + message.TopicType + " using new publisher")
+                    rospy.logerr("Could not import/deserialize/republish message on " + full_topic_name + " of type " + message.TopicType + " using new publisher")
 
     def extract_type_and_package(self, input_topic_type):
         topic_package = input_topic_type.split("/")[0]
@@ -65,4 +67,4 @@ class MessageDemulitplexer:
 if __name__ == '__main__':
     rospy.init_node('message_demultiplexer')
     aggregation_topic = rospy.get_param("~aggregation_topic", "test/Aggregated")
-    MessageSerializer(aggregation_topic)
+    MessageSerializer(aggregation_topic, rospy.get_namespace())
