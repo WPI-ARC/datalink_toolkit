@@ -66,5 +66,5 @@ class MessageDemulitplexer:
 
 if __name__ == '__main__':
     rospy.init_node('message_demultiplexer')
-    aggregation_topic = rospy.get_param("~aggregation_topic", "test/Aggregated")
-    MessageSerializer(aggregation_topic, rospy.get_namespace())
+    aggregated_topic = rospy.get_param("~aggregated_topic", "test/Aggregated")
+    MessageDemultiplexer(aggregated_topic, rospy.get_namespace())

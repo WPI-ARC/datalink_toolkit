@@ -50,5 +50,5 @@ if __name__ == '__main__':
     rospy.init_node('Serializer')
     topic_name = rospy.get_param("~topic_name", "test/Test")
     topic_type = rospy.get_param("~topic_type", "std_msgs/String")
-    aggregation_topic = rospy.get_param("~aggregation_topic", "test/Aggregated")
+    aggregation_topic = rospy.get_param("~aggregation_topic", "test/Aggregator")
     MessageSerializer(topic_name, topic_type, aggregation_topic)
