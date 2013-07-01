@@ -27,6 +27,7 @@ add_message_files(
   SerializedMessage.msg
   CompressedMessage.msg
   AggregatedMessages.msg
+  TopicUpdate.msg
 )
 
 ## Generate services in the 'srv' folder

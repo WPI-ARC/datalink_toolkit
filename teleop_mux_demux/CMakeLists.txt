@@ -93,6 +93,7 @@ install(PROGRAMS
   src/teleop_mux_demux/message_multiplexer.py
   src/teleop_mux_demux/message_demultiplexer.py
   src/teleop_mux_demux/message_serializer.py
+  src/teleop_mux_demux/topic_manager_tx.py
   DESTINATION
   ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
