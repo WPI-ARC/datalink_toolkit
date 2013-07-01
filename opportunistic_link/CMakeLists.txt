@@ -77,6 +77,7 @@ catkin_package(
 install(PROGRAMS
   src/opportunistic_link/link_startpoint.py
   src/opportunistic_link/link_endpoint.py
+  src/opportunistic_link/rate_controller.py
   DESTINATION
   ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
