@@ -107,17 +107,21 @@ class TopicManagerTX:
                         rospy.logerr("Already watching topic but the type has changed!")
                         self.available_topics[topic_name] = topic_info[1]
                         self.topic_handlers[topic_name] = self.build_new_handler(topic_name, topic_info[1], self.aggregation_topic)
+                    system_update.TopicNames.append(topic_name)
+                    system_update.TopicTypes.append(topic_info[1])
                 except:
-                    if ((self.whitelisted_topics == []) and (topic_name not in self.blacklisted_topics)):
+                    if ((self.whitelisted_topics == []) and not self.is_blacklisted(topic_name)):
                         rospy.loginfo("Adding subscriber to a newly available topic: " + topic_name)
                         self.available_topics[topic_name] = topic_info[1]
                         self.topic_handlers[topic_name] = self.build_new_handler(topic_name, topic_info[1], self.aggregation_topic)
+                        system_update.TopicNames.append(topic_name)
+                        system_update.TopicTypes.append(topic_info[1])
                     elif (topic_name in self.whitelisted_topics):
                         rospy.loginfo("Adding subscriber to a newly available topic: " + topic_name)
                         self.available_topics[topic_name] = topic_info[1]
                         self.topic_handlers[topic_name] = self.build_new_handler(topic_name, topic_info[1], self.aggregation_topic)
-                system_update.TopicNames.append(topic_name)
-                system_update.TopicTypes.append(topic_info[1])
+                        system_update.TopicNames.append(topic_name)
+                        system_update.TopicTypes.append(topic_info[1])
             # Package the update message (instead of actually publishing it, we skip
             # that step and directly serialize it for aggregation as there are no
             # subscribers for it on this side of the link
@@ -130,6 +134,16 @@ class TopicManagerTX:
             serialized_msg.SerializedMessageData = buff.getvalue()
             buff.close()
             self.update_publisher.publish(serialized_msg)
+
+    def is_blacklisted(self, potential_topic):
+        for entry in self.blacklisted_topics:
+            if (potential_topic == entry):
+                return True
+            if ('*' in entry):
+                namespace = entry.split("/*")[0]
+                if (namespace in potential_topic):
+                    return True
+        return False
 
     def build_new_handler(self, topic_name, full_topic_type, aggregation_topic):
         [topic_type, topic_package] = self.extract_type_and_package(full_topic_type)
@@ -151,4 +165,4 @@ class TopicManagerTX:
 if __name__ == '__main__':
     rospy.init_node('topic_handler_tx')
     aggregation_topic = rospy.get_param("~aggregation_topic", "Aggregation")
-    TopicManagerTX(rospy.get_namespace(), aggregation_topic)
+    TopicManagerTX(rospy.get_namespace(), aggregation_topic, ['rosout', 'rosout_agg', 'Aggregation', 'Aggregated', 'workstation/*'])

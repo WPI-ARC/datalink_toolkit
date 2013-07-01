@@ -32,9 +32,10 @@ class SubscribeHandler:
 
 class TopicHandlerRX:
 
-    def __init__(self, original_topic_name, self.real_topic_type, republish_namespace):
+    def __init__(self, topic_name, real_topic_type, republish_namespace):
         self.republish_namespace = republish_namespace
         self.topic_name = topic_name
+        self.real_topic_type = real_topic_type
         self.client = rospy.ServiceProxy(self.topic_name + "/link_control", LinkControl)
         link_change = LinkControlRequest()
         link_change.Forward = False
@@ -42,8 +43,8 @@ class TopicHandlerRX:
         self.client.call(link_change)
         rospy.loginfo("...link state set - topic: " + self.topic_name)
         self.subscriber_handler = SubscribeHandler(self.sub_connect, self.sub_disconnect)
-        real_publisher_name = (self.republish_namespace + "/" + self.original_topic_name).lstrip("/")
-        self.publisher = rospy.Publisher(self.topic_name, eval(self.topic_type), self.subscriber_handler)
+        real_publisher_name = (self.republish_namespace + "/" + self.topic_name).lstrip("/")
+        self.publisher = rospy.Publisher(real_publisher_name, self.real_topic_type, self.subscriber_handler)
         rospy.loginfo("Started topic handler - topic: " + self.topic_name)
 
     def sub_connect(self, num_subscribers):
@@ -67,7 +68,7 @@ class TopicHandlerRX:
     def republish(self, serialized):
         new_msg = self.real_topic_type()
         new_msg.deserialize(serialized)
-        self.publisher.publish(msg)
+        self.publisher.publish(new_msg)
 
 class TopicManagerRX:
 
@@ -90,18 +91,23 @@ class TopicManagerRX:
                 update = TopicUpdate()
                 update.deserialize(message.SerializedMessageData)
                 # Make sure every topic has an endpoint and add one if it doesn't
-                for topic_name in update.TopicNames:
+                if (len(update.TopicNames) != len(update.TopicTypes)):
+                    rospy.logerr("Malformed TopicUpdate message!")
+                    continue
+                for index in range(len(update.TopicNames)):
+                    topic_name = update.TopicNames[index]
+                    topic_type = update.TopicTypes[index]
                     try:
                         existing_type = self.available_topics[topic_name]
-                        if (existing_type != topic_info[1]):
+                        if (existing_type != topic_type):
                             rospy.logerr("Already watching topic but the type has changed!")
-                            self.available_topics[topic_name] = topic_info[1]
-                            self.topic_handlers[topic_name] = self.build_new_handler(topic_name, topic_info[1])
+                            self.available_topics[topic_name] = topic_type
+                            self.topic_handlers[topic_name] = self.build_new_handler(topic_name, topic_type)
                     except:
                         rospy.loginfo("Adding handler to a newly available topic: " + topic_name)
-                        self.available_topics[topic_name] = topic_info[1]
-                        self.topic_handlers[topic_name] = self.build_new_handler(topic_name, topic_info[1])
-                rospy.loginfo("Handlers update from system update message")
+                        self.available_topics[topic_name] = topic_type
+                        self.topic_handlers[topic_name] = self.build_new_handler(topic_name, topic_type)
+                rospy.logdebug("Handlers updated from system update message")
             else:
                 try:
                     self.topic_handlers[message.TopicName].republish(message.SerializedMessageData)
@@ -126,6 +132,7 @@ class TopicManagerRX:
         exec(eval_str, globals())
 
 if __name__ == '__main__':
-    rospy.init_node('topic_manager_rx')
+    rospy.init_node('topic_handler_rx')
     aggregated_topic = rospy.get_param("~aggregated_topic", "Aggregated")
-    TopicManagerRX(aggregated_topic, rospy.get_namespace())
+    republish_namespace = rospy.get_param("~republish_namespace", "workstation")
+    TopicManagerRX(aggregated_topic, republish_namespace)
