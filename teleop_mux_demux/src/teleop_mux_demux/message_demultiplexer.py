@@ -10,7 +10,7 @@
 
 import rospy
 from std_msgs.msg import *
-from telop_msgs.msg import *
+from teleop_msgs.msg import *
 import message_demultiplexer
 
 class MessageDemulitplexer:

@@ -8,7 +8,7 @@
 
 import rospy
 from std_msgs.msg import *
-from opportunistic_link.srv import *
+from teleop_msgs.srv import *
 import link_startpoint
 
 class SubscribeHandler:

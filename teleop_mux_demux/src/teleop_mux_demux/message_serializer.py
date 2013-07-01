@@ -11,7 +11,7 @@
 import rospy
 import StringIO
 from std_msgs.msg import *
-from telop_msgs.msg import *
+from teleop_msgs.msg import *
 import message_serializer
 
 class MessageSerializer:
@@ -20,7 +20,7 @@ class MessageSerializer:
         self.topic_name = input_topic
         [self.topic_type, self.topic_package] = self.extract_type_and_package(input_topic_type)
         self.dynamic_load(self.topic_package)
-        self.publisher = rospy.Publish(aggregation_topic, SerializedMessage)
+        self.publisher = rospy.Publisher(aggregation_topic, SerializedMessage)
         self.subscriber = rospy.Subscriber(input_topic, eval(self.topic_type), self.sub_cb)
         rospy.loginfo("Loaded Serializer")
         while not rospy.is_shutdown():

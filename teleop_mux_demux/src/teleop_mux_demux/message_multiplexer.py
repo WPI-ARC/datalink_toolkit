@@ -10,7 +10,7 @@
 
 import rospy
 from std_msgs.msg import *
-from telop_msgs.msg import *
+from teleop_msgs.msg import *
 import threading
 from copy import deepcopy
 import message_multiplexer
