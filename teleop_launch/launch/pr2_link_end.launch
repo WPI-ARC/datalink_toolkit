@@ -1,0 +1,46 @@
+<launch>
+
+  <!-- Set up the message demulitplexer/deserializer -->
+
+  <node pkg="teleop_mux_demux" type="message_demultiplexer.py" name="demultiplexer" output="screen" >
+    <param name="aggregated_topic" type="string" value="Aggregated" />
+    <param name="republish_namespace" type="string" value="link" />
+  </node>
+
+  <!-- Set up link endpoint for joint states -->
+
+  <node pkg="opportunistic_link" type="link_endpoint.py" name="jointstate_endpoint" output="screen" >
+    <param name="output_topic_name" type="string" value="robot/joint_states" />
+    <param name="topic_type" type="string" value="sensor_msgs/JointState" />
+    <param name="transport_data" type="string" value="link/joint_states/data" />
+    <param name="transport_ctrl" type="string" value="joint_states/ctrl" />
+  </node>
+
+  <!-- Set up link endpoint for base laser scan -->
+
+  <node pkg="opportunistic_link" type="link_endpoint.py" name="basescan_endpoint" output="screen" >
+    <param name="output_topic_name" type="string" value="robot/base_scan" />
+    <param name="topic_type" type="string" value="sensor_msgs/LaserScan" />
+    <param name="transport_data" type="string" value="link/base_scan/data" />
+    <param name="transport_ctrl" type="string" value="base_scan/ctrl" />
+  </node>
+
+  <!-- Set up link endpoint for Kinect camera images -->
+
+  <node pkg="opportunistic_link" type="link_endpoint.py" name="kinectcam_endpoint" output="screen" >
+    <param name="output_topic_name" type="string" value="robot/head_mount_kinect/rgb/image_color" />
+    <param name="topic_type" type="string" value="sensor_msgs/Image" />
+    <param name="transport_data" type="string" value="link/head_mount_kinect/rgb/image_color/data" />
+    <param name="transport_ctrl" type="string" value="head_mount_kinect/rgb/image_color/ctrl" />
+  </node>
+
+  <!-- Set up link endpoint for Kinect camera info -->
+
+  <node pkg="opportunistic_link" type="link_endpoint.py" name="kinectcaminfo_endpoint" output="screen" >
+    <param name="output_topic_name" type="string" value="robot/head_mount_kinect/rgb/camera_info" />
+    <param name="topic_type" type="string" value="sensor_msgs/CameraInfo" />
+    <param name="transport_data" type="string" value="link/head_mount_kinect/rgb/camera_info/data" />
+    <param name="transport_ctrl" type="string" value="head_mount_kinect/rgb/camera_info/ctrl" />
+  </node>
+
+</launch>

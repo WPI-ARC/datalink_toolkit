@@ -16,12 +16,12 @@ import message_serializer
 
 class MessageSerializer:
 
-    def __init__(self, input_topic, input_topic_type, aggregation_topic):
-        self.topic_name = input_topic
+    def __init__(self, input_topic_name, input_topic_type, aggregation_topic):
+        self.input_topic_name = input_topic_name
         [self.topic_type, self.topic_package] = self.extract_type_and_package(input_topic_type)
         self.dynamic_load(self.topic_package)
         self.publisher = rospy.Publisher(aggregation_topic, SerializedMessage)
-        self.subscriber = rospy.Subscriber(input_topic, eval(self.topic_type), self.sub_cb)
+        self.subscriber = rospy.Subscriber(self.input_topic_name, eval(self.topic_type), self.sub_cb)
         rospy.loginfo("Loaded Serializer")
         while not rospy.is_shutdown():
             rospy.spin()
@@ -30,7 +30,7 @@ class MessageSerializer:
         buff = StringIO.StringIO()
         msg.serialize(buff)
         serialized_msg = SerializedMessage()
-        serialized_msg.TopicName = self.topic_name
+        serialized_msg.TopicName = self.input_topic_name
         serialized_msg.TopicType = self.topic_package + "/" + self.topic_type
         serialized_msg.SerializedMessageData = buff.getvalue()
         self.publisher.publish(serialized_msg)
@@ -48,7 +48,7 @@ class MessageSerializer:
 
 if __name__ == '__main__':
     rospy.init_node('Serializer')
-    topic_name = rospy.get_param("~topic_name", "test/Test")
+    input_topic_name = rospy.get_param("~input_topic_name", "test/Test")
     topic_type = rospy.get_param("~topic_type", "std_msgs/String")
     aggregation_topic = rospy.get_param("~aggregation_topic", "test/Aggregator")
-    MessageSerializer(topic_name, topic_type, aggregation_topic)
+    MessageSerializer(input_topic_name, topic_type, aggregation_topic)

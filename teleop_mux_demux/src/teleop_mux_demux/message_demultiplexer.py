@@ -13,7 +13,7 @@ from std_msgs.msg import *
 from teleop_msgs.msg import *
 import message_demultiplexer
 
-class MessageDemulitplexer:
+class MessageDemultiplexer:
 
     def __init__(self, aggregated_topic_in, namespace):
         self.topic_pubs = {}
@@ -27,7 +27,7 @@ class MessageDemulitplexer:
     def sub_cb(self, msg):
         for message in msg.Messages:
             [topic_type, topic_package] = self.extract_type_and_package(message.TopicType)
-            full_topic_name = self.namespace + "/" + message.TopicName
+            full_topic_name = (self.namespace + "/" + message.TopicName).lstrip("/")
             if (full_topic_name in self.topic_pubs):
                 try:
                     new_msg = eval(topic_type)()
@@ -67,4 +67,5 @@ class MessageDemulitplexer:
 if __name__ == '__main__':
     rospy.init_node('message_demultiplexer')
     aggregated_topic = rospy.get_param("~aggregated_topic", "test/Aggregated")
-    MessageDemultiplexer(aggregated_topic, rospy.get_namespace())
+    republish_namespace = rospy.get_param("~republish_namespace", "workstation")
+    MessageDemultiplexer(aggregated_topic, republish_namespace)

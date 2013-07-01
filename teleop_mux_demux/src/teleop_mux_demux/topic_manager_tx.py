@@ -165,4 +165,6 @@ class TopicManagerTX:
 if __name__ == '__main__':
     rospy.init_node('topic_handler_tx')
     aggregation_topic = rospy.get_param("~aggregation_topic", "Aggregation")
-    TopicManagerTX(rospy.get_namespace(), aggregation_topic, ['rosout', 'rosout_agg', 'Aggregation', 'Aggregated', 'workstation/*'])
+    topic_whitelist = ['joint_states']
+    topic_blacklist = ['rosout', 'rosout_agg', 'Aggregation', 'Aggregated', 'workstation/*']
+    TopicManagerTX(rospy.get_namespace(), aggregation_topic, topic_blacklist, topic_whitelist, 0.2)

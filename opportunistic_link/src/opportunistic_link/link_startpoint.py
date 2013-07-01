@@ -28,17 +28,16 @@ class SubscribeHandler:
 
 class LinkStartPoint:
 
-    def __init__(self, topic_name, input_topic_type, transport_namespace):
+    def __init__(self, input_topic_name, input_topic_type, transport_data, transport_ctrl):
         rospy.loginfo("Starting LinkStartPoint...")
         [self.topic_type, self.topic_package] = self.extract_type_and_package(input_topic_type)
         self.dynamic_load(self.topic_package)
-        self.transport_namespace = transport_namespace
-        self.topic_name = topic_name
+        self.input_topic_name = input_topic_name
         self.forward = False
-        self.server = rospy.Service(transport_namespace + "/link_control", LinkControl, self.link_cb)
+        self.server = rospy.Service(transport_ctrl, LinkControl, self.link_cb)
         self.subscriber_handler = SubscribeHandler(self.sub_connect, self.sub_disconnect)
-        self.publisher = rospy.Publisher(transport_namespace + "/link_data", eval(self.topic_type), self.subscriber_handler)
-        self.subscriber = rospy.Subscriber(self.topic_name, eval(self.topic_type), self.sub_cb)
+        self.publisher = rospy.Publisher(transport_data, eval(self.topic_type), self.subscriber_handler)
+        self.subscriber = rospy.Subscriber(self.input_topic_name, eval(self.topic_type), self.sub_cb)
         rospy.loginfo("...LinkStartPoint loaded")
         while not rospy.is_shutdown():
             rospy.spin()
@@ -82,7 +81,8 @@ class LinkStartPoint:
 
 if __name__ == '__main__':
     rospy.init_node('link_startpoint')
-    topic_name = rospy.get_param("~topic_name", "robot/test")
+    input_topic_name = rospy.get_param("~input_topic_name", "robot/test")
     topic_type = rospy.get_param("~topic_type", "std_msgs/String")
-    transport_namespace = rospy.get_param("~transport_namespace", "opportunistic_link")
-    LinkStartPoint(topic_name, topic_type, transport_namespace)
+    transport_data = rospy.get_param("~transport_data", "opportunistic_link/link_data")
+    transport_ctrl = rospy.get_param("~transport_ctrl", "opportunisitc_link/link_control")
+    LinkStartPoint(input_topic_name, topic_type, transport_data, transport_ctrl)

@@ -1,0 +1,70 @@
+<launch>
+
+  <!-- Set up the link startpoint and serializer for joint states -->
+
+  <node pkg="opportunistic_link" type="link_startpoint.py" name="jointstate_startpoint" output="screen" >
+    <param name="input_topic_name" type="string" value="joint_states" />
+    <param name="topic_type" type="string" value="sensor_msgs/JointState" />
+    <param name="transport_data" type="string" value="joint_states/data" />
+    <param name="transport_ctrl" type="string" value="joint_states/ctrl" />
+  </node>
+
+  <node pkg="teleop_mux_demux" type="message_serializer.py" name="jointstate_serializer" output="screen" >
+    <param name="input_topic_name" type="string" value="joint_states/data" />
+    <param name="topic_type" type="string" value="sensor_msgs/JointState" />
+    <param name="aggregation_topic" type="string" value="Aggregator" />
+  </node>
+
+  <!-- Set up the link startpoint and serializer for base laser scans -->
+
+  <node pkg="opportunistic_link" type="link_startpoint.py" name="basescan_startpoint" output="screen" >
+    <param name="input_topic_name" type="string" value="base_scan" />
+    <param name="topic_type" type="string" value="sensor_msgs/LaserScan" />
+    <param name="transport_data" type="string" value="base_scan/data" />
+    <param name="transport_ctrl" type="string" value="base_scan/ctrl" />
+  </node>
+
+  <node pkg="teleop_mux_demux" type="message_serializer.py" name="basescan_serializer" output="screen" >
+    <param name="input_topic_name" type="string" value="base_scan/data" />
+    <param name="topic_type" type="string" value="sensor_msgs/LaserScan" />
+    <param name="aggregation_topic" type="string" value="Aggregator" />
+  </node>
+
+  <!-- Set up the link startpoint and serializer for Kinect camera images -->
+
+  <node pkg="opportunistic_link" type="link_startpoint.py" name="kinectcam_startpoint" output="screen" >
+    <param name="input_topic_name" type="string" value="head_mount_kinect/rgb/image_color" />
+    <param name="topic_type" type="string" value="sensor_msgs/Image" />
+    <param name="transport_data" type="string" value="head_mount_kinect/rgb/image_color/data" />
+    <param name="transport_ctrl" type="string" value="head_mount_kinect/rgb/image_color/ctrl" />
+  </node>
+
+  <node pkg="teleop_mux_demux" type="message_serializer.py" name="kinectcam_serializer" output="screen" >
+    <param name="input_topic_name" type="string" value="head_mount_kinect/rgb/image_color/data" />
+    <param name="topic_type" type="string" value="sensor_msgs/Image" />
+    <param name="aggregation_topic" type="string" value="Aggregator" />
+  </node>
+
+  <!-- Set up the link startpoint and serializer for Kinect camera info -->
+
+  <node pkg="opportunistic_link" type="link_startpoint.py" name="kinectcaminfo_startpoint" output="screen" >
+    <param name="input_topic_name" type="string" value="head_mount_kinect/rgb/camera_info" />
+    <param name="topic_type" type="string" value="sensor_msgs/CameraInfo" />
+    <param name="transport_data" type="string" value="head_mount_kinect/rgb/camera_info/data" />
+    <param name="transport_ctrl" type="string" value="head_mount_kinect/rgb/camera_info/ctrl" />
+  </node>
+
+  <node pkg="teleop_mux_demux" type="message_serializer.py" name="kinectcaminfo_serializer" output="screen" >
+    <param name="input_topic_name" type="string" value="head_mount_kinect/rgb/camera_info/data" />
+    <param name="topic_type" type="string" value="sensor_msgs/CameraInfo" />
+    <param name="aggregation_topic" type="string" value="Aggregator" />
+  </node>
+
+  <!-- Set up the message multiplexer -->
+
+  <node pkg="teleop_mux_demux" type="message_multiplexer.py" name="multiplexer" output="screen" >
+    <param name="aggregation_topic" type="string" value="Aggregator" />
+    <param name="aggregated_topic" type="string" value="Aggregated" />
+  </node>
+
+</launch>
