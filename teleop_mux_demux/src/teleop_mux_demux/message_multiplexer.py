@@ -15,7 +15,7 @@ import threading
 from copy import deepcopy
 import message_multiplexer
 
-class MessageMulitplexer:
+class MessageMultiplexer:
 
     def __init__(self, aggregation_topic_in, aggregated_topic_out, publication_rate, max_queue=10):
         self.queue = [None for index in range(max_queue)]
@@ -36,7 +36,7 @@ class MessageMulitplexer:
         if (self.cur_index == 0):
             return
         aggregate_message = AggregatedMessages()
-        for index in range(len(self.cur_index)):
+        for index in range(self.cur_index):
             aggregate_message.Messages.append(self.queue[index])
         aggregate_message.header.stamp = rospy.Time.now()
         self.publisher.publish(aggregate_message)
@@ -54,6 +54,7 @@ class MessageMulitplexer:
 
 if __name__ == '__main__':
     rospy.init_node('message_multiplexer')
-    aggregation_topic = rospy.get_param("~aggregation_topic", "test/Aggregator")
-    aggregated_topic = rospy.get_param("~aggregated_topic", "test/Aggregated")
-    MessageMultiplexer(aggregation_topic, aggregated_topic)
+    aggregation_topic = rospy.get_param("~aggregation_topic", "Aggregation")
+    aggregated_topic = rospy.get_param("~aggregated_topic", "Aggregated")
+    publication_rate = rospy.get_param("~pub_rate", 10.0)
+    MessageMultiplexer(aggregation_topic, aggregated_topic, publication_rate)

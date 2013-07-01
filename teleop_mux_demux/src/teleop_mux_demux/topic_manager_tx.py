@@ -16,9 +16,9 @@ from teleop_msgs.msg import *
 from teleop_msgs.srv import *
 import StringIO
 
-import python_mp_test
+import topic_manager_tx
 
-class TopicHandler:
+class TopicHandlerTX:
 
     def __init__(self, topic_name, real_topic_type, full_topic_type, aggregation_topic):
         self.full_topic_type = full_topic_type
@@ -31,7 +31,7 @@ class TopicHandler:
         self.rate_server = rospy.Service(topic_name + "/rate_control", RateControl, self.rate_cb)
         self.publisher = rospy.Publisher(aggregation_topic, SerializedMessage)
         self.subscriber = rospy.Subscriber(topic_name, real_topic_type, self.sub_cb)
-        rospy.loginfo("Started topic handler - topic: " + topic_name)
+        rospy.loginfo("Started topic handler - topic: " + self.topic_name)
 
     def link_cb(self, request):
         if (request.Forward == True):
@@ -75,21 +75,20 @@ class TopicHandler:
                 buff.close()
                 self.publisher.publish(serialized_msg)
 
-class TopicManager:
+class TopicManagerTX:
 
-    def __init__(self, namespace, aggregation_topic, topic_blacklist=['rosout', 'rosout_agg'], topic_whitelist=[], check_rate=1):
+    def __init__(self, namespace, aggregation_topic, topic_blacklist=['rosout', 'rosout_agg', 'Aggregation', 'Aggregated'], topic_whitelist=[], check_rate=1):
         self.namespace = namespace
         self.aggregation_topic = aggregation_topic
         self.imported_packages = ["std_msgs", "teleop_msgs"]
         self.available_topics = {}
         self.blacklisted_topics = topic_blacklist
-        self.blacklisted_topics.append(self.aggregation_topic)
         self.whitelisted_topics = topic_whitelist
         self.topic_handlers = {}
         self.update_publisher = rospy.Publisher(aggregation_topic, SerializedMessage)
         self.master = rospy.get_master()
         rate = rospy.Rate(check_rate)
-        rospy.loginfo("Loaded topic manager")
+        rospy.loginfo("Loaded topic manager [TX]")
         while not rospy.is_shutdown():
             self.update_available_topics()
             rate.sleep()
@@ -119,6 +118,9 @@ class TopicManager:
                         self.topic_handlers[topic_name] = self.build_new_handler(topic_name, topic_info[1], self.aggregation_topic)
                 system_update.TopicNames.append(topic_name)
                 system_update.TopicTypes.append(topic_info[1])
+            # Package the update message (instead of actually publishing it, we skip
+            # that step and directly serialize it for aggregation as there are no
+            # subscribers for it on this side of the link
             system_update.header.stamp = rospy.Time.now()
             buff = StringIO.StringIO()
             system_update.serialize(buff)
@@ -134,7 +136,7 @@ class TopicManager:
         if (topic_package not in self.imported_packages):
             self.dynamic_load(topic_package)
             self.imported_packages.append(topic_package)
-        return TopicHandler(topic_name, eval(topic_type), full_topic_type, aggregation_topic)
+        return TopicHandlerTX(topic_name, eval(topic_type), full_topic_type, aggregation_topic)
 
     def extract_type_and_package(self, input_topic_type):
         topic_package = input_topic_type.split("/")[0]
@@ -149,4 +151,4 @@ class TopicManager:
 if __name__ == '__main__':
     rospy.init_node('topic_handler_tx')
     aggregation_topic = rospy.get_param("~aggregation_topic", "Aggregation")
-    TopicManager(rospy.get_namespace(), aggregation_topic)
+    TopicManagerTX(rospy.get_namespace(), aggregation_topic)
