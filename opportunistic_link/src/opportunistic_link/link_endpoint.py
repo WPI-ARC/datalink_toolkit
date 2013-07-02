@@ -83,6 +83,6 @@ if __name__ == '__main__':
     output_topic_name = rospy.get_param("~output_topic_name", "workstation/test")
     topic_type = rospy.get_param("~topic_type", "std_msgs/String")
     transport_data = rospy.get_param("~transport_data", "opportunistic_link/link_data")
-    transport_ctrl = rospy.get_param("~transport_ctrl", "opportunisitc_link/link_control")
+    transport_ctrl = rospy.get_param("~transport_ctrl", "opportunistic_link/link_control")
     latched = rospy.get_param("~latched", False)
     LinkEndPoint(output_topic_name, topic_type, transport_data, transport_ctrl, latched)

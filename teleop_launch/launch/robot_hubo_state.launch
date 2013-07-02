@@ -1,0 +1,14 @@
+<launch>
+
+  <arg name="model" default="$(find hubo_description)/huboplus/huboplus.xml" />
+
+  <param name="robot_description" textfile="$(arg model)" />
+  <node name="hubo_joint_state_publisher" pkg="hubo_ach_ros_bridge" type="hubo_joint_state_publisher.py" output="screen" >
+    <remap from="tf" to="robot/tf" />
+  </node>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" >
+    <remap from="tf" to="robot/tf" />
+  </node>
+
+</launch>
