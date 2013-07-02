@@ -5,7 +5,7 @@
 
   <!-- Set up the link startpoint and serializer for testing -->
 
-  <include file="$(find teleop_launch)/launch/link_start_chain.launch">
+  <include file="$(find teleop_launch)/launch/hybrid_link_start_chain.launch">
     <arg name="chain_name" value="test" />
     <arg name="chain_type" value="std_msgs/String" />
     <arg name="input_topic" value="test" />

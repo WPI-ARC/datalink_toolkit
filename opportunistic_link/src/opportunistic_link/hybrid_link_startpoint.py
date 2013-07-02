@@ -2,27 +2,33 @@
 
 #################################################
 #                                               #
-#   Opportunistic message forwarder             #
+#   Combined rate controller, link controller   #
+#   and message serializer
 #                                               #
 #################################################
 
 import rospy
+import StringIO
 from std_msgs.msg import *
+from teleop_msgs.msg import *
 from teleop_msgs.srv import *
-import link_startpoint
+import hybrid_link_startpoint
 
 class HybridLinkStartPoint:
 
-    def __init__(self, input_topic_name, input_topic_type, aggregation_topic_name, transport_ctrl):
+    def __init__(self, input_topic_name, input_topic_type, aggregation_topic_name, transport_ctrl, rate_ctrl, default_rate):
         rospy.loginfo("Starting HybridLinkStartPoint...")
         [self.topic_type, self.topic_package] = self.extract_type_and_package(input_topic_type)
         self.dynamic_load(self.topic_package)
         self.input_topic_name = input_topic_name
         self.aggregation_topic_name = aggregation_topic_name
         self.forward = False
-        self.rate = float('infinity')
+        self.rate = abs(default_rate)
         self.last_msg = None
-        self.looprate = rospy.Rate(10.0)
+        if (self.rate != float('infinity') and self.rate != 0.0):
+            self.looprate = rospy.Rate(self.rate)
+        else:
+            self.looprate = rospy.Rate(10.0)
         self.rate_server = rospy.Service(rate_ctrl, RateControl, self.rate_cb)
         self.server = rospy.Service(transport_ctrl, LinkControl, self.link_cb)
         self.publisher = rospy.Publisher(self.aggregation_topic_name, SerializedMessage)
@@ -79,12 +85,10 @@ class HybridLinkStartPoint:
 
 if __name__ == '__main__':
     rospy.init_node('link_startpoint')
-    input_topic_name = rospy.get_param("~input_topic_name", "robot/test")
-    topic_type = rospy.get_param("~topic_type", "std_msgs/String")
-    transport_data = rospy.get_param("~transport_data", "opportunistic_link/link_data")
-    transport_ctrl = rospy.get_param("~transport_ctrl", "opportunisitc_link/link_control")
-    rate_ctrl = rospy.get_param("~rate_ctrl", "robot/test/rate")
+    input_topic_name = rospy.get_param("~input_topic_name", "test")
+    input_topic_type = rospy.get_param("~topic_type", "std_msgs/String")
+    transport_ctrl = rospy.get_param("~transport_ctrl", "opportunistic_link/link_control")
+    rate_ctrl = rospy.get_param("~rate_ctrl", "opportunistic_link/rate_control")
     default_rate = rospy.get_param("~default_rate", float('infinity'))
-    aggregation_topic = rospy.get_param("~aggregation_topic", "test/Aggregator")
-
-    HybridLinkStartPoint(input_topic_name, topic_type, transport_data, transport_ctrl)
+    aggregation_topic_name = rospy.get_param("~aggregation_topic", "Aggregator")
+    HybridLinkStartPoint(input_topic_name, input_topic_type, aggregation_topic_name, transport_ctrl, rate_ctrl, default_rate)

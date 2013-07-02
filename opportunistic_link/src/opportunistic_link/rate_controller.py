@@ -19,9 +19,12 @@ class RateController:
         self.dynamic_load(self.topic_package)
         self.input_topic_name = input_topic_name
         self.output_topic_name = output_topic_name
-        self.rate = float('infinity')
+        self.rate = abs(default_rate)
         self.last_msg = None
-        self.looprate = rospy.Rate(10.0)
+        if (self.rate != float('infinity') and self.rate != 0.0):
+            self.looprate = rospy.Rate(self.rate)
+        else:
+            self.looprate = rospy.Rate(10.0)
         self.rate_server = rospy.Service(rate_ctrl, RateControl, self.rate_cb)
         self.publisher = rospy.Publisher(output_topic_name, eval(self.topic_type))
         self.subscriber = rospy.Subscriber(self.input_topic_name, eval(self.topic_type), self.sub_cb)
