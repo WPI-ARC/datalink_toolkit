@@ -20,21 +20,22 @@ class RateController:
         self.input_topic_name = input_topic_name
         self.output_topic_name = output_topic_name
         self.rate = float('infinity')
-        self.last_time = rospy.get_time()
-        self.time_step = rospy.Duration(0.0)
+        self.last_msg = None
+        self.looprate = rospy.Rate(10.0)
         self.rate_server = rospy.Service(rate_ctrl, RateControl, self.rate_cb)
         self.publisher = rospy.Publisher(output_topic_name, eval(self.topic_type))
         self.subscriber = rospy.Subscriber(self.input_topic_name, eval(self.topic_type), self.sub_cb)
         rospy.loginfo("...RateController loaded")
         while not rospy.is_shutdown():
-            rospy.spin()
+            if (self.rate != float('infinity') and self.rate != 0.0 and self.last_msg != None):
+                self.publisher.publish(self.last_msg)
+                self.last_msg = None
+            self.looprate.sleep()
 
     def rate_cb(self, request):
-        self.rate = request.Rate
-        if (self.rate != 0.0 and self.rate != -0.0):
-            self.time_step = rospy.Duration(1.0 / self.rate)
-        else:
-            self.rate = 0.0
+        self.rate = abs(request.Rate)
+        if (self.rate != 0.0 and self.rate != float('infinity')):
+            self.looprate = rospy.Rate(self.rate)
         rospy.loginfo("Set rate to " + str(self.rate) + " - topic: " + self.input_topic_name)
         response = RateControlResponse()
         response.State = self.rate
@@ -43,11 +44,8 @@ class RateController:
     def sub_cb(self, msg):
         if (self.rate == float('infinity')):
             self.publisher.publish(msg)
-        elif (self.rate != 0.0):
-            new_time = rospy.get_time()
-            if (rospy.Duration(new_time - self.last_time) > self.time_step):
-                self.last_time = new_time
-                self.publisher.publish(msg)
+        else:
+            self.last_msg = msg
 
     def extract_type_and_package(self, input_topic_type):
         topic_package = input_topic_type.split("/")[0]
