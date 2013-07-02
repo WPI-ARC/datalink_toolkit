@@ -39,7 +39,7 @@ class RateController:
 
     def sub_cb(self, msg):
         if (self.rate == float('infinity')):
-            pass
+            self.publisher.publish(msg)
         else:
             new_time = rospy.get_time()
             if (rospy.Duration(new_time - self.last_time) > self.time_step):
