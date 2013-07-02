@@ -31,8 +31,11 @@ class RateController:
 
     def rate_cb(self, request):
         self.rate = request.Rate
-        self.time_step = rospy.Duration(1.0 / self.rate)
-        rospy.loginfo("Set rate to " + str(self.rate) + " - topic: " + self.topic_name)
+        if (self.rate != 0.0 and self.rate != -0.0):
+            self.time_step = rospy.Duration(1.0 / self.rate)
+        else:
+            self.rate = 0.0
+        rospy.loginfo("Set rate to " + str(self.rate) + " - topic: " + self.input_topic_name)
         response = RateControlResponse()
         response.State = self.rate
         return response
@@ -40,7 +43,7 @@ class RateController:
     def sub_cb(self, msg):
         if (self.rate == float('infinity')):
             self.publisher.publish(msg)
-        else:
+        elif (self.rate != 0.0):
             new_time = rospy.get_time()
             if (rospy.Duration(new_time - self.last_time) > self.time_step):
                 self.last_time = new_time
