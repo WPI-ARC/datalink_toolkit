@@ -19,7 +19,6 @@
     <arg name="input_topic" value="test" />
     <arg name="relay_namespace" value="$(arg relay_namespace)" />
     <arg name="link_namespace" value="$(arg link_namespace)" />
-    <arg name="aggregated_topic" value="$(arg aggregated_topic)" />
   </include>
 
 </launch>

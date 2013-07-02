@@ -19,7 +19,6 @@
     <arg name="input_topic" value="joint_states" />
     <arg name="relay_namespace" value="$(arg relay_namespace)" />
     <arg name="link_namespace" value="$(arg link_namespace)" />
-    <arg name="aggregated_topic" value="$(arg aggregated_topic)" />
   </include>
 
   <!-- Set up link endpoint for base laser scan -->
@@ -30,7 +29,6 @@
     <arg name="input_topic" value="base_scan" />
     <arg name="relay_namespace" value="$(arg relay_namespace)" />
     <arg name="link_namespace" value="$(arg link_namespace)" />
-    <arg name="aggregated_topic" value="$(arg aggregated_topic)" />
   </include>
 
   <!-- Set up link endpoint for Kinect camera images -->
@@ -41,7 +39,6 @@
     <arg name="input_topic" value="head_mount_kinect/rgb/image_color" />
     <arg name="relay_namespace" value="$(arg relay_namespace)" />
     <arg name="link_namespace" value="$(arg link_namespace)" />
-    <arg name="aggregated_topic" value="$(arg aggregated_topic)" />
   </include>
 
   <!-- Set up link endpoint for Kinect camera info -->
@@ -52,7 +49,6 @@
     <arg name="input_topic" value="head_mount_kinect/rgb/camera_info" />
     <arg name="relay_namespace" value="$(arg relay_namespace)" />
     <arg name="link_namespace" value="$(arg link_namespace)" />
-    <arg name="aggregated_topic" value="$(arg aggregated_topic)" />
   </include>
 
 </launch>
