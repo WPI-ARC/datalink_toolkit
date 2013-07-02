@@ -51,6 +51,7 @@ class MessageDemultiplexer:
                     new_msg = eval(topic_type)()
                     new_msg.deserialize(message.SerializedMessageData)
                     self.topic_pubs[full_topic_name].publish(new_msg)
+                    rospy.loginfo("Made new publisher - topic: " + full_topic_name)
                 except:
                     rospy.logerr("Could not import/deserialize/republish message on " + full_topic_name + " of type " + message.TopicType + " using new publisher")
 

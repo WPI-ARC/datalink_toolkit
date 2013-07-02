@@ -15,7 +15,7 @@ class RateController:
 
     def __init__(self, input_topic_name, topic_type, output_topic_name, rate_ctrl, default_rate):
         rospy.loginfo("Starting RateController...")
-        [self.topic_type, self.topic_package] = self.extract_type_and_package(input_topic_type)
+        [self.topic_type, self.topic_package] = self.extract_type_and_package(topic_type)
         self.dynamic_load(self.topic_package)
         self.input_topic_name = input_topic_name
         self.output_topic_name = output_topic_name
@@ -63,4 +63,4 @@ if __name__ == '__main__':
     output_topic_name = rospy.get_param("~output_topic_name", "limited/robot/test")
     rate_ctrl = rospy.get_param("~rate_ctrl", "robot/test/rate")
     default_rate = rospy.get_param("~default_rate", float('infinity'))
-    RateController(input_topic_name, topic_type, ouput_topic_name, rate_ctrl, default_rate)
+    RateController(input_topic_name, topic_type, output_topic_name, rate_ctrl, default_rate)
