@@ -28,10 +28,11 @@ class SubscribeHandler:
 
 class LinkEndPoint:
 
-    def __init__(self, output_topic_name, output_topic_type, transport_data, transport_ctrl):
+    def __init__(self, output_topic_name, output_topic_type, transport_data, transport_ctrl, latched):
         rospy.loginfo("Starting LinkEndPoint...")
         [self.topic_type, self.topic_package] = self.extract_type_and_package(output_topic_type)
         self.dynamic_load(self.topic_package)
+        self.latched = latched
         self.output_topic_name = output_topic_name
         self.client = rospy.ServiceProxy(transport_ctrl, LinkControl)
         link_change = LinkControlRequest()
@@ -41,7 +42,7 @@ class LinkEndPoint:
         rospy.loginfo("...link state set")
         self.subscriber = rospy.Subscriber(transport_data , eval(self.topic_type), self.sub_cb)
         self.subscriber_handler = SubscribeHandler(self.sub_connect, self.sub_disconnect)
-        self.publisher = rospy.Publisher(self.output_topic_name, eval(self.topic_type), self.subscriber_handler)
+        self.publisher = rospy.Publisher(self.output_topic_name, eval(self.topic_type), self.subscriber_handler, latch=self.latched)
         rospy.loginfo("...LinkEndPoint loaded")
         while not rospy.is_shutdown():
             rospy.spin()
@@ -83,4 +84,5 @@ if __name__ == '__main__':
     topic_type = rospy.get_param("~topic_type", "std_msgs/String")
     transport_data = rospy.get_param("~transport_data", "opportunistic_link/link_data")
     transport_ctrl = rospy.get_param("~transport_ctrl", "opportunisitc_link/link_control")
-    LinkEndPoint(output_topic_name, topic_type, transport_data, transport_ctrl)
+    latched = rospy.get_param("~latched", False)
+    LinkEndPoint(output_topic_name, topic_type, transport_data, transport_ctrl, latched)

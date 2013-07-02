@@ -6,6 +6,8 @@
   <arg name="link_namespace" />
   <arg name="relay_namespace" />
 
+  <arg name="latched" default="false" />
+
   <arg name="output_topic" default="$(arg relay_namespace)/$(arg input_topic)" />
   <arg name="transport_topic" default="$(arg link_namespace)/$(arg input_topic)/data" />
   <arg name="transport_ctrl" default="$(arg input_topic)/link" />
@@ -15,6 +17,7 @@
     <param name="topic_type" type="string" value="$(arg chain_type)" />
     <param name="transport_data" type="string" value="$(arg transport_topic)" />
     <param name="transport_ctrl" type="string" value="$(arg transport_ctrl)" />
+    <param name="latched" type="bool" value="$(arg latched)" />
   </node>
 
 </launch>
