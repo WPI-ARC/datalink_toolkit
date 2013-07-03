@@ -16,11 +16,11 @@ from copy import deepcopy
 
 class SocketBridgeTX:
 
-    def __init__(self, port, input_topic, input_topic_type, msg_len):
+    def __init__(self, port, input_topic, input_topic_type, MSG_LEN):
         [self.topic_type, self.topic_package] = self.extract_type_and_package(input_topic_type)
         self.dynamic_load(self.topic_package)
         self.port = port
-        self.msg_len = msg_len
+        self.MSG_LEN = MSG_LEN
         self.socket_lock = threading.Lock()
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(('', self.port))
