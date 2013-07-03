@@ -39,6 +39,7 @@ class SocketBridgeRX:
                     self.buffer = self.buffer[ex + 8:]
                 except:
                     self.buffer = ""
+                    rospy.logerr("Flushed buffer to recover from overrun error")
 
     def clean_and_pub(self, raw):
         try:
@@ -46,7 +47,7 @@ class SocketBridgeRX:
             new_msg.deserialize(raw)
             self.pub.publish(new_msg)
         except:
-            rospy.logerr("Failed to deserializa and republish message!")
+            rospy.logerr("Failed to deserialize and republish message!")
 
     def extract_type_and_package(self, input_topic_type):
         topic_package = input_topic_type.split("/")[0]
