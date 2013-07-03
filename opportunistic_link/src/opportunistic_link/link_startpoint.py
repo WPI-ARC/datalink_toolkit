@@ -81,8 +81,8 @@ class LinkStartPoint:
 
 if __name__ == '__main__':
     rospy.init_node('link_startpoint')
-    input_topic_name = rospy.get_param("~input_topic_name", "robot/test")
+    input_topic_name = rospy.get_param("~input_topic_name", "test")
     topic_type = rospy.get_param("~topic_type", "std_msgs/String")
-    transport_data = rospy.get_param("~transport_data", "opportunistic_link/link_data")
-    transport_ctrl = rospy.get_param("~transport_ctrl", "opportunistic_link/link_control")
+    transport_data = rospy.get_param("~transport_data", "test/transport")
+    transport_ctrl = rospy.get_param("~transport_ctrl", "test/ctrl")
     LinkStartPoint(input_topic_name, topic_type, transport_data, transport_ctrl)
