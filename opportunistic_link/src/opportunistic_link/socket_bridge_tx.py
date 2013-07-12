@@ -4,7 +4,7 @@
 #                                                   #
 #   Copyright (c) 2013, Calder Phillips-Grafflin    #
 #                                                   #
-#   Alternative ROS transport method over serial    #
+#   Alternative ROS transport method over sockets   #
 #                                                   #
 #####################################################
 
