@@ -34,35 +34,34 @@ class SocketBridgeTX:
             rospy.loginfo("Added socket to address: " + str(address))
 
     def sub_cb(self, msg):
-        self.socket_lock.acquire()
-        # Serialize the message for transport
-        buff = StringIO.StringIO()
-        buff.write("<sbtxfs>")
-        msg.serialize(buff)
-        buff.write("</sbtxe>")
-        data = buff.getvalue()
-        buff.close()
-        # Send the data over all the available sockets
-        for available_socket in self.sockets:
-            try:
-                total_sent = 0
-                while (total_sent < len(data)):
-                    sent = available_socket.send(data[total_sent:])
-                    if (sent == 0):
-                        rospy.logerr("Socket connection broken")
+        with self.socket_lock:
+            # Serialize the message for transport
+            buff = StringIO.StringIO()
+            buff.write("<sbtxfs>")
+            msg.serialize(buff)
+            buff.write("</sbtxe>")
+            data = buff.getvalue()
+            buff.close()
+            # Send the data over all the available sockets
+            for available_socket in self.sockets:
+                try:
+                    total_sent = 0
+                    while (total_sent < len(data)):
+                        sent = available_socket.send(data[total_sent:])
+                        if (sent == 0):
+                            rospy.logerr("Socket connection broken")
+                            available_socket.close()
+                            self.sockets.remove(available_socket)
+                            break
+                        else:
+                            total_sent += sent
+                except:
+                    try:
                         available_socket.close()
                         self.sockets.remove(available_socket)
-                        break
-                    else:
-                        total_sent += sent
-            except:
-                try:
-                    available_socket.close()
-                    self.sockets.remove(available_socket)
-                    rospy.logerr("Socket connection failed")
-                except:
-                    rospy.logerr("Socket connection failed and unable to close socket")
-        self.socket_lock.release()
+                        rospy.logerr("Socket connection failed")
+                    except:
+                        rospy.logerr("Socket connection failed and unable to close socket")
 
     def extract_type_and_package(self, input_topic_type):
         topic_package = input_topic_type.split("/")[0]

@@ -8,6 +8,7 @@
 #################################################
 
 import rospy
+import threading
 import StringIO
 from std_msgs.msg import *
 from teleop_msgs.msg import *
@@ -20,6 +21,7 @@ class HybridLinkStartPoint:
         rospy.loginfo("Starting HybridLinkStartPoint...")
         [self.topic_type, self.topic_package] = self.extract_type_and_package(input_topic_type)
         self.dynamic_load(self.topic_package)
+        self.pub_lock = threading.Lock()
         self.input_topic_name = input_topic_name
         self.aggregation_topic_name = aggregation_topic_name
         self.forward = False
@@ -35,9 +37,10 @@ class HybridLinkStartPoint:
         self.subscriber = rospy.Subscriber(self.input_topic_name, eval(self.topic_type), self.sub_cb)
         rospy.loginfo("...HybridLinkStartPoint loaded")
         while not rospy.is_shutdown():
-            if (self.rate != float('infinity') and self.rate != 0.0 and self.last_msg != None and self.forward):
-                self.publisher.publish(self.last_msg)
-                self.last_msg = None
+            with self.pub_lock:
+                if (self.rate != float('infinity') and self.rate != 0.0 and self.last_msg != None and self.forward):
+                    self.publisher.publish(self.last_msg)
+                    self.last_msg = None
             self.looprate.sleep()
 
     def link_cb(self, request):
@@ -52,10 +55,21 @@ class HybridLinkStartPoint:
         return response
 
     def rate_cb(self, request):
-        self.rate = abs(request.Rate)
-        if (self.rate != 0.0 and self.rate != float('infinity')):
+        if (request.Rate > 0.0 and request.Rate != float('infinity') and request.Rate != float('nan')):
+            self.rate = request.Rate
             self.looprate = rospy.Rate(self.rate)
-        rospy.loginfo("Set rate to " + str(self.rate) + " - topic: " + self.input_topic_name)
+            rospy.loginfo("Set rate to " + str(self.rate) + " - topic: " + self.input_topic_name)
+        elif (request.Rate == -1.0 and self.rate != float('infinity')):
+            with self.pub_lock:
+                if (self.last_msg != None):
+                    self.publisher.publish(self.last_msg)
+                    self.last_msg = None
+                    rospy.loginfo("Requested single message from topic: " + self.input_topic_name);
+        elif (request.Rate == 0.0 or request.Rate == -0.0):
+            self.rate = 0.0
+            rospy.loginfo("Paused message publishing")
+        else:
+            rospy.logerr("Requested publish rate is invalid")
         response = RateControlResponse()
         response.State = self.rate
         return response
@@ -68,10 +82,11 @@ class HybridLinkStartPoint:
         serialized_msg.TopicType = self.topic_package + "/" + self.topic_type
         serialized_msg.SerializedMessageData = buff.getvalue()
         buff.close()
-        if (self.rate == float('infinity') and self.forward):
-            self.publisher.publish(serialized_msg)
-        else:
-            self.last_msg = serialized_msg
+        with self.pub_lock:
+            if (self.rate == float('infinity') and self.forward):
+                self.publisher.publish(serialized_msg)
+            else:
+                self.last_msg = serialized_msg
 
     def extract_type_and_package(self, input_topic_type):
         topic_package = input_topic_type.split("/")[0]
