@@ -36,7 +36,7 @@ class LinkStartPoint:
         self.forward = False
         self.server = rospy.Service(transport_ctrl, LinkControl, self.link_cb)
         self.subscriber_handler = SubscribeHandler(self.sub_connect, self.sub_disconnect)
-        self.publisher = rospy.Publisher(transport_data, eval(self.topic_type), self.subscriber_handler)
+        self.publisher = rospy.Publisher(transport_data, eval(self.topic_type), self.subscriber_handler, latch=True)
         self.subscriber = rospy.Subscriber(self.input_topic_name, eval(self.topic_type), self.sub_cb)
         rospy.loginfo("...LinkStartPoint loaded")
         while not rospy.is_shutdown():

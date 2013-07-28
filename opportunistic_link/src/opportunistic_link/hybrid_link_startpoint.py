@@ -33,7 +33,7 @@ class HybridLinkStartPoint:
             self.looprate = rospy.Rate(10.0)
         self.rate_server = rospy.Service(rate_ctrl, RateControl, self.rate_cb)
         self.server = rospy.Service(transport_ctrl, LinkControl, self.link_cb)
-        self.publisher = rospy.Publisher(self.aggregation_topic_name, SerializedMessage)
+        self.publisher = rospy.Publisher(self.aggregation_topic_name, SerializedMessage, latch=True)
         self.subscriber = rospy.Subscriber(self.input_topic_name, eval(self.topic_type), self.sub_cb)
         rospy.loginfo("...HybridLinkStartPoint loaded")
         while not rospy.is_shutdown():

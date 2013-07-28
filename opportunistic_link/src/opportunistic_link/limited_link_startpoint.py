@@ -32,7 +32,7 @@ class LimitedLinkStartPoint:
             self.looprate = rospy.Rate(10.0)
         self.rate_server = rospy.Service(rate_ctrl, RateControl, self.rate_cb)
         self.server = rospy.Service(transport_ctrl, LinkControl, self.link_cb)
-        self.publisher = rospy.Publisher(self.transport_topic_name, eval(self.topic_type))
+        self.publisher = rospy.Publisher(self.transport_topic_name, eval(self.topic_type), latch=True)
         self.subscriber = rospy.Subscriber(self.input_topic_name, eval(self.topic_type), self.sub_cb)
         rospy.loginfo("...LimitedLinkStartPoint loaded")
         while not rospy.is_shutdown():
