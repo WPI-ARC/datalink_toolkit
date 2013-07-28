@@ -10,36 +10,67 @@
 
 import rospy
 import socket
+import struct
 
 class SocketBridgeRX:
 
-    def __init__(self, target, port, output_topic, output_topic_type, MSG_LEN):
+    def __init__(self, target, port, output_topic, output_topic_type, READ_LEN):
         [self.topic_type, self.topic_package] = self.extract_type_and_package(output_topic_type)
         self.dynamic_load(self.topic_package)
         self.real_topic_type = eval(self.topic_type)
+        self.OK = True
         self.port = port
         self.target = target
         self.pub = rospy.Publisher(output_topic, self.real_topic_type)
-        self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connection.connect((target, port))
+        self.recover_connection()
         self.buffer = ""
+        self.msg_len = -1
         rospy.loginfo("Loaded socket bridge [RX]")
         while not rospy.is_shutdown():
-            chunk = self.connection.recv(MSG_LEN)
-            if (chunk == ''):
-                rospy.logfatal("Socket connection terminated. Exiting...")
-                rospy.signal_shutdown("Socket connection ended")
-            self.buffer += chunk
-            sx = self.buffer.find("<sbtxfs>")
-            ex = self.buffer.find("</sbtxe>")
-            if (sx != -1 and ex != -1):
-                raw_data = self.buffer[sx + 8:ex]
-                self.clean_and_pub(raw_data)
+            if (self.OK):
+                new_data = ""
                 try:
-                    self.buffer = self.buffer[ex + 8:]
+                    new_data = self.connection.recv(READ_LEN)
                 except:
-                    self.buffer = ""
-                    rospy.logerr("Flushed buffer to recover from overrun error")
+                    self.connection.close()
+                    self.OK = False
+                    rospy.logerr("Socket read operation failed")
+                    continue
+                if (new_data == ''):
+                    self.connection.close()
+                    rospy.logerr("Socket connection broken")
+                    self.OK = False
+                    continue
+                else:
+                    self.buffer += new_data
+                    self.buffer = self.attempt_deserialization(self.buffer)
+            else:
+                self.recover_connection()
+
+    def recover_connection(self):
+        rospy.loginfo("Attempting to recover socket connection...")
+        try:
+            self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.connection.connect((self.target, self.port))
+            self.OK = True
+            rospy.loginfo("...socket connection recovered")
+        except:
+            self.connection.close()
+            rospy.logerr("...unable to recover socket connection. Trying again in 5 seconds...")
+            rospy.sleep(5.0)
+
+    def attempt_deserialization(self, data_buffer):
+        while (self.msg_len < 0 and len(data_buffer) >= 4) or (self.msg_len > -1 and len(data_buffer) >= self.msg_len):
+            if (self.msg_len < 0 and len(data_buffer) >= 4):
+                (self.msg_len,) = struct.unpack('<I', data_buffer[0:4])
+                data_buffer = data_buffer[4:]
+            if (self.msg_len > -1 and len(data_buffer) >= self.msg_len):
+                serialized_message = data_buffer[0:self.msg_len]
+                self.clean_and_pub(serialized_message)
+                data_buffer = data_buffer[self.msg_len:]
+                self.msg_len = -1
+        rospy.logdebug("Deserialized as much of the buffer as possible")
+        return data_buffer
 
     def clean_and_pub(self, raw):
         try:

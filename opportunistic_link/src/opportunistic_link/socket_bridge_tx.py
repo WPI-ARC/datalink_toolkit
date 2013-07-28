@@ -9,6 +9,7 @@
 #####################################################
 
 import rospy
+import struct
 import socket
 import StringIO
 import threading
@@ -23,23 +24,37 @@ class SocketBridgeTX:
         self.MSG_LEN = MSG_LEN
         self.socket_lock = threading.Lock()
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, self.server_socket.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) | 1)
         self.server_socket.bind(('', self.port))
         self.server_socket.listen(5)
         self.sockets = []
         self.sub = rospy.Subscriber(input_topic, eval(self.topic_type), self.sub_cb)
         rospy.loginfo("Loaded socket bridge [TX]")
+        rospy.on_shutdown(self.cleanup)
         while not rospy.is_shutdown():
             (clientsocket, address) = self.server_socket.accept()
             self.sockets.append(clientsocket)
             rospy.loginfo("Added socket to address: " + str(address))
 
+    def cleanup(self):
+        rospy.loginfo("Shutting down sockets...")
+        for socket in self.sockets:
+            socket.close()
+        self.server_socket.close()
+        rospy.loginfo("...Shutting down now!")
+
     def sub_cb(self, msg):
         with self.socket_lock:
             # Serialize the message for transport
             buff = StringIO.StringIO()
-            buff.write("<sbtxfs>")
+            start = buff.tell()
+            buff.seek(start + 4)
             msg.serialize(buff)
-            buff.write("</sbtxe>")
+            end = buff.tell()
+            buff.seek(start)
+            size = end - start - 4
+            buff.write(struct.pack('<I', size))
+            buff.seek(end)
             data = buff.getvalue()
             buff.close()
             # Send the data over all the available sockets
