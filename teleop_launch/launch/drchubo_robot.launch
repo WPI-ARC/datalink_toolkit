@@ -3,7 +3,7 @@
   <arg name="output" default="screen" />
   <arg name="remapped_tf" default="/robot_tf" />
   <arg name="default_rate" default="20" />
-  <arg name="model" default="$(find drchubo-v3)/robots/drchubo-v3.urdf" />
+  <arg name="model" default="$(find drchubo_v3)/robots/drchubo-v3.urdf" />
   <arg name="pi/2" value="1.5707963267948966" />
   <arg name="optical_rotate" value="0 0 0 -$(arg pi/2) 0 -$(arg pi/2)" />
 
