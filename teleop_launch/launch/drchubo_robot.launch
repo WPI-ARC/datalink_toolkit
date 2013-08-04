@@ -102,7 +102,7 @@
     <node name="longrange_rgbd_link_start" pkg="opportunistic_link" type="limited_image_link_startpoint" output="$(arg output)">
       <param name="input_base_topic" type="string" value="/rgbd_longrange/image_color" />
       <param name="link_base_topic" type="string" value="/link/rgbd_longrange/image_color" />
-      <param name="link_ctrl" type="string" value="/rgbd_longrange/link" />
+      <param name="link_ctrl" type="string" value="/rgbd_longrange/ctrl" />
       <param name="rate_ctrl" type="string" value="/rgbd_longrange/rate" />
       <param name="default_rate" type="double" value="$(arg default_rate)" />
       <remap from="/tf" to="$(arg remapped_tf)" />
@@ -119,7 +119,7 @@
     <node name="shortrange_rgbd_link_start" pkg="opportunistic_link" type="limited_image_link_startpoint" output="$(arg output)">
       <param name="input_base_topic" type="string" value="/rgbd_shortrange/image_color" />
       <param name="link_base_topic" type="string" value="/link/rgbd_shortrange/image_color" />
-      <param name="link_ctrl" type="string" value="/rgbd_shortrange/link" />
+      <param name="link_ctrl" type="string" value="/rgbd_shortrange/ctrl" />
       <param name="rate_ctrl" type="string" value="/rgbd_shortrange/rate" />
       <param name="default_rate" type="double" value="$(arg default_rate)" />
       <remap from="/tf" to="$(arg remapped_tf)" />
