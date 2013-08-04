@@ -99,14 +99,14 @@
       <arg name="default_rate" value="$(arg default_rate)" />
     </include>
     <!-- Upper RGBD camera & pointcloud -->
-    <include file="$(find teleop_launch)/launch/limited_link_start_chain.launch">
-      <arg name="chain_name" value="rgbd_longrange_color" />
-      <arg name="chain_type" value="sensor_msgs/Image" />
-      <arg name="input_topic" value="rgbd_longrange/image_color" />
-      <arg name="link_namespace" value="link" />
-      <arg name="relay_namespace" value="relay" />
-      <arg name="default_rate" value="$(arg default_rate)" />
-    </include>
+    <node name="longrange_rgbd_link_start" pkg="opportunistic_link" type="limited_image_link_startpoint" output="$(arg output)">
+      <param name="input_base_topic" type="string" value="rgbd_longrange/image_color" />
+      <param name="link_base_topic" type="string" value="link/rgbd_longrange/image_color" />
+      <param name="link_ctrl" type="string" value="rgbd_longrange/link" />
+      <param name="rate_ctrl" type="string" value="rgbd_longrange/rate" />
+      <param name="default_rate" type="double" value="$(arg default_rate)" />
+      <remap from="/tf" to="$(arg remapped_tf)" />
+    </node>
     <include file="$(find teleop_launch)/launch/limited_link_start_chain.launch">
       <arg name="chain_name" value="rgbd_longrange_cloud" />
       <arg name="chain_type" value="sensor_msgs/PointCloud2" />
@@ -115,35 +115,19 @@
       <arg name="relay_namespace" value="relay" />
       <arg name="default_rate" value="$(arg default_rate)" />
     </include>
-    <include file="$(find teleop_launch)/launch/limited_link_start_chain.launch">
-      <arg name="chain_name" value="rgbd_longrange_info" />
-      <arg name="chain_type" value="sensor_msgs/CameraInfo" />
-      <arg name="input_topic" value="rgbd_longrange/camera_info" />
-      <arg name="link_namespace" value="link" />
-      <arg name="relay_namespace" value="relay" />
-      <arg name="default_rate" value="$(arg default_rate)" />
-    </include>
     <!-- Lower RGBD camera -->
-    <include file="$(find teleop_launch)/launch/limited_link_start_chain.launch">
-      <arg name="chain_name" value="rgbd_shortrange_color" />
-      <arg name="chain_type" value="sensor_msgs/Image" />
-      <arg name="input_topic" value="rgbd_shortrange/image_color" />
-      <arg name="link_namespace" value="link" />
-      <arg name="relay_namespace" value="relay" />
-      <arg name="default_rate" value="$(arg default_rate)" />
-    </include>
+    <node name="shortrange_rgbd_link_start" pkg="opportunistic_link" type="limited_image_link_startpoint" output="$(arg output)">
+      <param name="input_base_topic" type="string" value="rgbd_shortrange/image_color" />
+      <param name="link_base_topic" type="string" value="link/rgbd_shortrange/image_color" />
+      <param name="link_ctrl" type="string" value="rgbd_shortrange/link" />
+      <param name="rate_ctrl" type="string" value="rgbd_shortrange/rate" />
+      <param name="default_rate" type="double" value="$(arg default_rate)" />
+      <remap from="/tf" to="$(arg remapped_tf)" />
+    </node>
     <include file="$(find teleop_launch)/launch/limited_link_start_chain.launch">
       <arg name="chain_name" value="rgbd_shortrange_cloud" />
       <arg name="chain_type" value="sensor_msgs/PointCloud2" />
       <arg name="input_topic" value="rgbd_shortrange/depth/points_xyzrgb" />
-      <arg name="link_namespace" value="link" />
-      <arg name="relay_namespace" value="relay" />
-      <arg name="default_rate" value="$(arg default_rate)" />
-    </include>
-    <include file="$(find teleop_launch)/launch/limited_link_start_chain.launch">
-      <arg name="chain_name" value="rgbd_shortrange_info" />
-      <arg name="chain_type" value="sensor_msgs/CameraInfo" />
-      <arg name="input_topic" value="rgbd_shortrange/camera_info" />
       <arg name="link_namespace" value="link" />
       <arg name="relay_namespace" value="relay" />
       <arg name="default_rate" value="$(arg default_rate)" />
