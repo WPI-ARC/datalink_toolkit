@@ -1,0 +1,23 @@
+<launch>
+
+  <arg name="chain_name" />
+  <arg name="chain_type" />
+  <arg name="input_topic" />
+  <arg name="link_namespace" />
+  <arg name="relay_namespace" />
+  <arg name="default_rate" />
+
+  <arg name="transport_topic" default="/$(arg link_namespace)/$(arg input_topic)/transport" />
+  <arg name="transport_ctrl" default="/$(arg input_topic)/ctrl" />
+  <arg name="rate_ctrl" default="/$(arg input_topic)/rate" />
+
+  <node pkg="opportunistic_link" type="limited_link_startpoint.py" name="$(arg chain_name)_startpoint" output="screen" >
+    <param name="input_topic_name" type="string" value="$(arg input_topic)" />
+    <param name="topic_type" type="string" value="$(arg chain_type)" />
+    <param name="transport_topic" type="string" value="$(arg transport_topic)" />
+    <param name="transport_ctrl" type="string" value="$(arg transport_ctrl)" />
+    <param name="rate_ctrl" type="string" value="$(arg rate_ctrl)" />
+    <param name="default_rate" type="double" value="$(arg default_rate)" />
+  </node>
+
+</launch>

@@ -4,7 +4,7 @@ project(opportunistic_link)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS rospy std_msgs teleop_msgs message_generation)
+find_package(catkin REQUIRED COMPONENTS rospy std_msgs sensor_msgs teleop_msgs image_transport message_generation)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -36,7 +36,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES opportunistic_link
-  CATKIN_DEPENDS rospy std_msgs teleop_msgs message_runtime
+  CATKIN_DEPENDS rospy std_msgs sensor_msgs teleop_msgs image_transport message_runtime
   DEPENDS system_lib
 )
 
@@ -54,16 +54,13 @@ catkin_package(
 # )
 
 ## Declare a cpp executable
-# add_executable(opportunistic_link_node src/opportunistic_link_node.cpp)
+add_executable(limited_image_link_startpoint src/limited_image_link_startpoint.cpp)
+add_dependencies(limited_image_link_startpoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(limited_image_link_startpoint ${catkin_LIBRARIES})
 
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
-# add_dependencies(opportunistic_link_node opportunistic_link_generate_messages_cpp)
-
-## Specify libraries to link a library or executable target against
-# target_link_libraries(opportunistic_link_node
-#   ${catkin_LIBRARIES}
-# )
+add_executable(image_link_endpoint src/image_link_endpoint.cpp)
+add_dependencies(image_link_endpoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(image_link_endpoint ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -75,6 +72,8 @@ catkin_package(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 install(PROGRAMS
+  src/opportunistic_link/hybid_link_startpoint.py
+  src/opportunistic_link/limited_link_startpoint.py
   src/opportunistic_link/link_startpoint.py
   src/opportunistic_link/link_endpoint.py
   src/opportunistic_link/rate_controller.py

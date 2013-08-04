@@ -59,6 +59,9 @@ class HybridLinkStartPoint:
             self.rate = request.Rate
             self.looprate = rospy.Rate(self.rate)
             rospy.loginfo("Set rate to " + str(self.rate) + " - topic: " + self.input_topic_name)
+        elif (request.Rate == float('infinity')):
+            self.rate = request.Rate
+            rospy.loginfo("Set rate to native")
         elif (request.Rate == -1.0 and self.rate != float('infinity')):
             with self.pub_lock:
                 if (self.last_msg != None):

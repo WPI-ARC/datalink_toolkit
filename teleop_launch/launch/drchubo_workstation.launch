@@ -1,0 +1,136 @@
+<launch>
+
+  <arg name="output" default="screen" />
+  <arg name="remapped_tf" default="/workstation_tf" />
+  <arg name="model" default="$(find drchubo-v3)/robots/drchubo-v3.urdf" />
+  <arg name="pi/2" value="1.5707963267948966" />
+  <arg name="optical_rotate" value="0 0 0 -$(arg pi/2) 0 -$(arg pi/2)" />
+  <arg name="workstation_prefix" value="drchubo_fullbody_workstation" />
+
+  <group ns="$(arg workstation_prefix)" >
+    <!-- Robot state & model -->
+    <param name="robot_description" textfile="$(arg model)" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="$(arg output)" >
+      <remap from="joint_state" to="relay/joint_states" />
+      <remap from="/tf" to="$(arg remapped_tf)" />
+    </node>
+    <node name="body_orientation_publisher" pkg="hubo_ach_ros_bridge" type="body_orientation_publisher.py" output="$(arg output)">
+      <param name="target_frame" type="string" value="world_orientation_frame" />
+      <param name="root_frame" type="string" value="body_imu_sensor_frame" />
+      <param name="rate" type="double" value="100" />
+      <param name="imu_topic" type="string" value="body_imu" />
+      <remap from="/tf" to="$(arg remapped_tf)" />
+    </node>
+    <node name="laser_orientation_publisher" pkg="hubo_head_controller" type="laser_orientation_publisher.py" output="$(arg output)">
+      <param name="head_variant" type="string" value="prebeta" />
+      <param name="laser_frame" type="string" value="laser_sensor_frame" />
+      <param name="root_frame" type="string" value="Body_NK2" />
+      <param name="laser_joint" type="string" value="NK3" />
+      <param name="rate" type="double" value="100" />
+      <remap from="/tf" to="$(arg remapped_tf)" />
+    </node>
+    <!-- Sensor frames -->
+    <include file="$(find hubo_launch)/launch/drchubo_sensor_frames.launch" >
+      <arg name="remapped_tf" value="$(arg remapped_tf)" />
+    </include>
+    <!-- Trinocular frames -->
+    <include file="$(find hubo_launch)/launch/drchubo_trinocular_frames.launch" >
+      <arg name="remapped_tf" value="$(arg remapped_tf)" />
+    </include>
+    <!-- RGBD frames -->
+    <include file="$(find hubo_launch)/launch/drchubo_rgbd_frames.launch" >
+      <arg name="remapped_tf" value="$(arg remapped_tf)" />
+    </include>
+    <!-- Teleoperation link start-side components -->
+    <include file="$(find teleop_launch)/launch/link_end_chain.launch">
+      <arg name="chain_name" value="joints" />
+      <arg name="chain_type" value="sensor_msgs/JointState" />
+      <arg name="input_topic" value="joint_states" />
+      <arg name="link_namespace" value="link" />
+      <arg name="relay_namespace" value="$(arg workstation_prefix)" />
+    </include>
+    <!-- Force-torque sensors -->
+    <include file="$(find teleop_launch)/launch/link_end_chain.launch">
+      <arg name="chain_name" value="left_wrist_ft" />
+      <arg name="chain_type" value="geometry_msgs/WrenchStamped" />
+      <arg name="input_topic" value="left_wrist_ft" />
+      <arg name="link_namespace" value="link" />
+      <arg name="relay_namespace" value="$(arg workstation_prefix)" />
+    </include>
+    <include file="$(find teleop_launch)/launch/link_end_chain.launch">
+      <arg name="chain_name" value="right_wrist_ft" />
+      <arg name="chain_type" value="geometry_msgs/WrenchStamped" />
+      <arg name="input_topic" value="right_wrist_ft" />
+      <arg name="link_namespace" value="link" />
+      <arg name="relay_namespace" value="$(arg workstation_prefix)" />
+    </include>
+    <include file="$(find teleop_launch)/launch/link_end_chain.launch">
+      <arg name="chain_name" value="left_ankle_ft" />
+      <arg name="chain_type" value="geometry_msgs/WrenchStamped" />
+      <arg name="input_topic" value="left_ankle_ft" />
+      <arg name="link_namespace" value="link" />
+      <arg name="relay_namespace" value="$(arg workstation_prefix)" />
+    </include>
+    <include file="$(find teleop_launch)/launch/link_end_chain.launch">
+      <arg name="chain_name" value="right_ankle_ft" />
+      <arg name="chain_type" value="geometry_msgs/WrenchStamped" />
+      <arg name="input_topic" value="right_ankle_ft" />
+      <arg name="link_namespace" value="link" />
+      <arg name="relay_namespace" value="$(arg workstation_prefix)" />
+    </include>
+    <!-- Body IMU -->
+    <include file="$(find teleop_launch)/launch/link_end_chain.launch">
+      <arg name="chain_name" value="imu" />
+      <arg name="chain_type" value="sensor_msgs/Imu" />
+      <arg name="input_topic" value="body_imu" />
+      <arg name="link_namespace" value="link" />
+      <arg name="relay_namespace" value="$(arg workstation_prefix)" />
+    </include>
+    <!-- Upper RGBD camera & pointcloud -->
+    <include file="$(find teleop_launch)/launch/link_end_chain.launch">
+      <arg name="chain_name" value="rgbd_longrange_color" />
+      <arg name="chain_type" value="sensor_msgs/Image" />
+      <arg name="input_topic" value="rgbd_longrange/image_color" />
+      <arg name="link_namespace" value="link" />
+      <arg name="relay_namespace" value="$(arg workstation_prefix)" />
+    </include>
+    <include file="$(find teleop_launch)/launch/link_end_chain.launch">
+      <arg name="chain_name" value="rgbd_longrange_cloud" />
+      <arg name="chain_type" value="sensor_msgs/PointCloud2" />
+      <arg name="input_topic" value="rgbd_longrange/depth/points_xyzrgb" />
+      <arg name="link_namespace" value="link" />
+      <arg name="relay_namespace" value="$(arg workstation_prefix)" />
+    </include>
+    <include file="$(find teleop_launch)/launch/link_end_chain.launch">
+      <arg name="chain_name" value="rgbd_longrange_info" />
+      <arg name="chain_type" value="sensor_msgs/CameraInfo" />
+      <arg name="input_topic" value="rgbd_longrange/camera_info" />
+      <arg name="link_namespace" value="link" />
+      <arg name="relay_namespace" value="$(arg workstation_prefix)" />
+    </include>
+    <!-- Lower RGBD camera -->
+    <include file="$(find teleop_launch)/launch/link_end_chain.launch">
+      <arg name="chain_name" value="rgbd_shortrange_color" />
+      <arg name="chain_type" value="sensor_msgs/Image" />
+      <arg name="input_topic" value="rgbd_shortrange/image_color" />
+      <arg name="link_namespace" value="link" />
+      <arg name="relay_namespace" value="$(arg workstation_prefix)" />
+    </include>
+    <include file="$(find teleop_launch)/launch/link_end_chain.launch">
+      <arg name="chain_name" value="rgbd_shortrange_cloud" />
+      <arg name="chain_type" value="sensor_msgs/PointCloud2" />
+      <arg name="input_topic" value="rgbd_shortrange/depth/points_xyzrgb" />
+      <arg name="link_namespace" value="link" />
+      <arg name="relay_namespace" value="$(arg workstation_prefix)" />
+    </include>
+    <include file="$(find teleop_launch)/launch/link_end_chain.launch">
+      <arg name="chain_name" value="rgbd_shortrange_info" />
+      <arg name="chain_type" value="sensor_msgs/CameraInfo" />
+      <arg name="input_topic" value="rgbd_shortrange/camera_info" />
+      <arg name="link_namespace" value="link" />
+      <arg name="relay_namespace" value="$(arg workstation_prefix)" />
+    </include>
+
+  </group>
+</launch>
+
