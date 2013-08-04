@@ -5,13 +5,6 @@
 #include <teleop_msgs/LinkControl.h>
 #include <teleop_msgs/RateControl.h>
 
-#include <ros/ros.h>
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/CameraInfo.h>
-#include <teleop_msgs/LinkControl.h>
-#include <teleop_msgs/RateControl.h>
-
 class ImageLinkEndpoint
 {
 protected:
@@ -35,12 +28,12 @@ public:
         forward_ = false;
         link_base_topic_ = link_base_topic;
         link_ctrl_service_ = link_ctrl_service;
-        image_sub_ = it_.subscribeCamera(link_base_topic, 1, &ImageLinkEndpoint::image_data_cb, this);
         link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service);
         link_watchdog_ = nh_.createTimer(ros::Duration(10.0), &ImageLinkEndpoint::link_watchdog_cb, this, true);
         image_transport::SubscriberStatusCallback camera_image_cb = boost::bind(&ImageLinkEndpoint::image_cb, this);
         ros::SubscriberStatusCallback camera_info_cb = boost::bind(&ImageLinkEndpoint::info_cb, this);
         image_pub_ = it_.advertiseCamera(relay_base_topic, 1, camera_image_cb, camera_image_cb, camera_info_cb, camera_info_cb, ros::VoidPtr(), latched);
+        image_sub_ = it_.subscribeCamera(link_base_topic, 1, &ImageLinkEndpoint::image_data_cb, this);
     }
 
     ~ImageLinkEndpoint()

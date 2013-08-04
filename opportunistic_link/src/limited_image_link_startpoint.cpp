@@ -31,8 +31,8 @@ public:
         {
             repub_rate_ = ros::Rate(forward_rate_);
         }
-        image_sub_ = it_.subscribeCamera(base_topic, 1, &ImageLinkStartpoint::image_cb, this);
         image_pub_ = it_.advertiseCamera(link_base_topic, 1, true);
+        image_sub_ = it_.subscribeCamera(base_topic, 1, &ImageLinkStartpoint::image_cb, this);
         link_server_ = nh_.advertiseService(link_ctrl_service, &ImageLinkStartpoint::link_control_cb, this);
         rate_server_ = nh_.advertiseService(rate_ctrl_service, &ImageLinkStartpoint::rate_control_cb, this);
     }
