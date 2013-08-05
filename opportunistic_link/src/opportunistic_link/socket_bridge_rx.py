@@ -36,7 +36,6 @@ class SocketBridgeRX:
                 try:
                     new_data = self.connection.recv(READ_LEN)
                 except:
-                    rospy.loginfo("Read operation exception")
                     continue
                 if (new_data == ''):
                     self.connection.close()
@@ -62,7 +61,7 @@ class SocketBridgeRX:
         try:
             self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.connection.connect((self.target, self.port))
-            #self.connection.settimeout(self.timeout)
+            self.connection.setblocking(1)
             self.OK = True
             rospy.loginfo("...socket connection recovered")
         except:
