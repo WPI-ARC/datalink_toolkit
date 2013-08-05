@@ -52,6 +52,7 @@ class SocketBridgeRX:
         try:
             self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.connection.connect((self.target, self.port))
+            self.connection.settimeout(5.0)
             self.OK = True
             rospy.loginfo("...socket connection recovered")
         except:
