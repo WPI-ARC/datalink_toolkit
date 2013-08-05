@@ -14,10 +14,11 @@ import struct
 
 class SocketBridgeRX:
 
-    def __init__(self, target, port, output_topic, output_topic_type, READ_LEN):
+    def __init__(self, target, port, output_topic, output_topic_type, checktime, timeout, READ_LEN):
         [self.topic_type, self.topic_package] = self.extract_type_and_package(output_topic_type)
         self.dynamic_load(self.topic_package)
         self.real_topic_type = eval(self.topic_type)
+        self.name = rospy.get_name()
         self.OK = True
         self.port = port
         self.target = target
@@ -25,6 +26,9 @@ class SocketBridgeRX:
         self.recover_connection()
         self.buffer = ""
         self.msg_len = -1
+        self.checktime = checktime
+        self.timeout = timeout
+        self.timer = rospy.Timer(rospy.Duration(self.checktime), self.connection_check, oneshot=False)
         rospy.loginfo("Loaded socket bridge [RX]")
         while not rospy.is_shutdown():
             if (self.OK):
@@ -32,9 +36,7 @@ class SocketBridgeRX:
                 try:
                     new_data = self.connection.recv(READ_LEN)
                 except:
-                    self.connection.close()
-                    self.OK = False
-                    rospy.logerr("Socket read operation failed")
+                    rospy.loginfo("Read operation exception")
                     continue
                 if (new_data == ''):
                     self.connection.close()
@@ -47,12 +49,20 @@ class SocketBridgeRX:
             else:
                 self.recover_connection()
 
+    def connection_check(self, event):
+        try:
+            self.connection.send(self.name + " | OK")
+            self.OK = True
+        except:
+            rospy.logerr("Socket write operation failed")
+            self.OK = False
+
     def recover_connection(self):
         rospy.loginfo("Attempting to recover socket connection...")
         try:
             self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.connection.connect((self.target, self.port))
-            self.connection.settimeout(5.0)
+            #self.connection.settimeout(self.timeout)
             self.OK = True
             rospy.loginfo("...socket connection recovered")
         except:
@@ -98,4 +108,6 @@ if __name__ == '__main__':
     target = rospy.get_param("~target", "localhost")
     port = rospy.get_param("~port", 9000)
     msg_len = rospy.get_param("~msg_len", 4096)
-    SocketBridgeRX(target, port, output_topic, topic_type, msg_len)
+    checktime = 5.0
+    timeout = 5.0
+    SocketBridgeRX(target, port, output_topic, topic_type, checktime, timeout, msg_len)

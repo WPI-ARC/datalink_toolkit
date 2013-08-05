@@ -37,6 +37,7 @@ add_service_files(
   FILES
   LinkControl.srv
   RateControl.srv
+  RequestMessage.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

@@ -1,0 +1,4 @@
+
+---
+bool available
+uint8[] message_data
