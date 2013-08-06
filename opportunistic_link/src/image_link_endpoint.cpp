@@ -97,18 +97,25 @@ public:
 
     void link_watchdog_cb(const ros::TimerEvent &e)
     {
-        teleop_msgs::LinkControl::Request req;
-        teleop_msgs::LinkControl::Response res;
-        req.Forward = forward_;
-        if (link_ctrl_client_.call(req, res))
+        try
         {
-            ROS_INFO("Link OK");
+            image_sub_.shutdown();
+            link_ctrl_client_.shutdown();
+            ROS_INFO("Closed existing service and subscriber");
         }
-        else
+        catch (...)
         {
-            ROS_ERROR("Failed to contact link startpoint - attempting to reconnect");
+            ROS_WARN("Could not close existing service and subscriber");
+        }
+        try
+        {
+            ROS_INFO("Attempting to reconnect");
             image_sub_ = it_.subscribeCamera(link_base_topic_, 1, &ImageLinkEndpoint::image_data_cb, this);
             link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service_);
+        }
+        catch (...)
+        {
+            ROS_ERROR("Reconnect attempt failed");
         }
         link_watchdog_ = nh_.createTimer(ros::Duration(10.0), &ImageLinkEndpoint::link_watchdog_cb, this, true);
     }
