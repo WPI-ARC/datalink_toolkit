@@ -53,26 +53,22 @@ class LinkEndPoint:
             rospy.spin()
 
     def connection_check(self, event):
-        rospy.loginfo("Checking the status of the subscriber...")
+        rospy.loginfo("Rebuilding service and subscriber...")
         try:
+            self.client.close()
+            self.subscriber.unregister()
+        except:
+            rospy.logwarn("Error trying to close service and subscriber")
+        rospy.sleep(1.0)
+        try:
+            self.client = rospy.ServiceProxy(self.transport_ctrl, LinkControl)
+            self.subscriber = rospy.Subscriber(self.transport_data , eval(self.topic_type), self.sub_cb)
             link_change = LinkControlRequest()
             link_change.Forward = self.link_forward
             self.client.call(link_change)
-            rospy.loginfo("...link OK")
+            rospy.loginfo("Reconnected link")
         except:
-            try:
-                rospy.logerr("Link is down/broken - attempting to reconnect")
-                self.client.close()
-                self.subscriber.unregister()
-                rospy.sleep(1.0)
-                self.client = rospy.ServiceProxy(self.transport_ctrl, LinkControl)
-                self.subscriber = rospy.Subscriber(self.transport_data , eval(self.topic_type), self.sub_cb)
-                link_change = LinkControlRequest()
-                link_change.Forward = self.link_forward
-                self.client.call(link_change)
-                rospy.loginfo("Reconnected link")
-            except:
-                rospy.logerr("Link appears to be down!")
+            rospy.logerr("Link appears to be down!")
         self.timer = rospy.Timer(rospy.Duration(self.timeout), self.connection_check, oneshot=True)
 
     def sub_connect(self, num_subscribers):
