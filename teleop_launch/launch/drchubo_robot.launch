@@ -1,5 +1,7 @@
 <launch>
 
+  <arg name="real" default="false" />
+  <arg name="robot" default="202" />
   <arg name="output" default="screen" />
   <arg name="remapped_tf" default="/robot_tf" />
   <arg name="default_rate" default="20" />
@@ -7,7 +9,14 @@
   <arg name="pi/2" value="1.5707963267948966" />
   <arg name="optical_rotate" value="0 0 0 -$(arg pi/2) 0 -$(arg pi/2)" />
 
+  <machine name="hubo" address="192.168.0.$(arg robot)" user="hubo" password="      " env-loader="/opt/ros/groovy/env.sh" />
+
   <group ns="drchubo_fullbody_interface">
+    <!-- Interface to hardware (runs on chest computer) -->
+    <node if="$(arg real)" machine="hubo" name="drchubo_fullbody_feedback_node" pkg="hubo_ach_ros_bridge" type="feedback" output="$(arg output)" >
+      <rosparam command="load" file="$(find hubo_launch)/config/drchubo_fullbody_params.yaml" />
+      <remap from="/tf" to="$(arg remapped_tf)" />
+    </node>
     <!-- Robot state & model -->
     <param name="robot_description" textfile="$(arg model)" />
     <node name="joint_state_publisher" pkg="hubo_ach_ros_bridge" type="drchubo_joint_state_publisher.py" output="$(arg output)">

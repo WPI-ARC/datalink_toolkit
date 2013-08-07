@@ -92,6 +92,7 @@
       <param name="link_base_topic" type="string" value="/link/rgbd_longrange/image_color" />
       <param name="link_ctrl" type="string" value="/rgbd_longrange/ctrl" />
       <param name="latched" type="boolean" value="true" />
+      <param name="image_transport" type="string" value="compressed" />
       <remap from="/tf" to="$(arg remapped_tf)" />
     </node>
     <include file="$(find teleop_launch)/launch/link_end_chain.launch">
@@ -107,6 +108,7 @@
       <param name="link_base_topic" type="string" value="/link/rgbd_shortrange/image_color" />
       <param name="link_ctrl" type="string" value="/rgbd_shortrange/ctrl" />
       <param name="latched" type="boolean" value="true" />
+      <param name="image_transport" type="string" value="compressed" />
       <remap from="/tf" to="$(arg remapped_tf)" />
     </node>
     <include file="$(find teleop_launch)/launch/link_end_chain.launch">
