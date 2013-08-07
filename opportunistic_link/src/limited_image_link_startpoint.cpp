@@ -14,16 +14,15 @@ protected:
     bool forward_;
     double forward_rate_;
     ros::Rate repub_rate_;
-    image_transport::CameraSubscriber image_sub_;
-    image_transport::CameraPublisher image_pub_;
+    image_transport::Subscriber image_sub_;
+    image_transport::Publisher image_pub_;
     ros::ServiceServer link_server_;
     ros::ServiceServer rate_server_;
     sensor_msgs::ImageConstPtr last_image_;
-    sensor_msgs::CameraInfoConstPtr last_info_;
 
 public:
 
-    ImageLinkStartpoint(ros::NodeHandle &n, double default_rate, std::string base_topic, std::string link_base_topic, std::string link_ctrl_service, std::string rate_ctrl_service) : nh_(n), it_(n), repub_rate_(20.0)
+    ImageLinkStartpoint(ros::NodeHandle &n, double default_rate, std::string image_topic, std::string link_topic, std::string link_ctrl_service, std::string rate_ctrl_service) : nh_(n), it_(n), repub_rate_(20.0)
     {
         forward_ = false;
         forward_rate_ = default_rate;
@@ -31,8 +30,8 @@ public:
         {
             repub_rate_ = ros::Rate(forward_rate_);
         }
-        image_pub_ = it_.advertiseCamera(link_base_topic, 1, true);
-        image_sub_ = it_.subscribeCamera(base_topic, 1, &ImageLinkStartpoint::image_cb, this);
+        image_pub_ = it_.advertise(link_topic, 1, true);
+        image_sub_ = it_.subscribe(image_topic, 1, &ImageLinkStartpoint::image_cb, this);
         link_server_ = nh_.advertiseService(link_ctrl_service, &ImageLinkStartpoint::link_control_cb, this);
         rate_server_ = nh_.advertiseService(rate_ctrl_service, &ImageLinkStartpoint::rate_control_cb, this);
     }
@@ -47,11 +46,10 @@ public:
         {
             if (forward_ && (forward_rate_ != INFINITY) && (forward_rate_ != 0.0))
             {
-                if (last_image_ && last_info_)
+                if (last_image_)
                 {
-                    image_pub_.publish(last_image_, last_info_);
+                    image_pub_.publish(last_image_);
                     last_image_ = sensor_msgs::ImageConstPtr();
-                    last_info_ = sensor_msgs::CameraInfoConstPtr();
                 }
             }
             repub_rate_.sleep();
@@ -90,11 +88,10 @@ public:
         }
         else if ((req.Rate == -1.0) && (forward_rate_ != INFINITY))
         {
-            if (last_image_ && last_info_)
+            if (last_image_)
             {
-                image_pub_.publish(last_image_, last_info_);
+                image_pub_.publish(last_image_);
                 last_image_ = sensor_msgs::ImageConstPtr();
-                last_info_ = sensor_msgs::CameraInfoConstPtr();
                 ROS_INFO("Single message republished");
             }
             ROS_WARN("Single message requested, none available");
@@ -113,16 +110,15 @@ public:
         return true;
     }
 
-    void image_cb(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& info)
+    void image_cb(const sensor_msgs::ImageConstPtr& image)
     {
         if (forward_ && (forward_rate_ == INFINITY))
         {
-            image_pub_.publish(image, info);
+            image_pub_.publish(image);
         }
         else
         {
             last_image_ = sensor_msgs::ImageConstPtr(image);
-            last_info_ = sensor_msgs::CameraInfoConstPtr(info);
         }
     }
 };
@@ -133,17 +129,17 @@ int main(int argc, char** argv)
     ROS_INFO("Starting image link startpoint...");
     ros::NodeHandle nh;
     ros::NodeHandle nhp("~");
-    std::string base_topic;
-    std::string link_base_topic;
+    std::string image_topic;
+    std::string link_topic;
     std::string link_ctrl_service;
     std::string rate_ctrl_service;
     double default_rate;
-    nhp.param(std::string("input_base_topic"), base_topic, std::string("camera/image"));
-    nhp.param(std::string("link_base_topic"), link_base_topic, std::string("link/camera/image"));
+    nhp.param(std::string("image_topic"), image_topic, std::string("camera/image"));
+    nhp.param(std::string("link_topic"), link_topic, std::string("link/camera/image"));
     nhp.param(std::string("link_ctrl"), link_ctrl_service, std::string("camera/ctrl"));
     nhp.param(std::string("rate_ctrl"), rate_ctrl_service, std::string("camera/rate"));
     nhp.param(std::string("default_rate"), default_rate, (double)INFINITY);
-    ImageLinkStartpoint startpoint(nh, default_rate, base_topic, link_base_topic, link_ctrl_service, rate_ctrl_service);
+    ImageLinkStartpoint startpoint(nh, default_rate, image_topic, link_topic, link_ctrl_service, rate_ctrl_service);
     ROS_INFO("...startup complete");
     startpoint.loop();
     return 0;
