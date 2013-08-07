@@ -34,6 +34,8 @@ public:
         image_sub_ = it_.subscribe(image_topic, 1, &ImageLinkStartpoint::image_cb, this);
         link_server_ = nh_.advertiseService(link_ctrl_service, &ImageLinkStartpoint::link_control_cb, this);
         rate_server_ = nh_.advertiseService(rate_ctrl_service, &ImageLinkStartpoint::rate_control_cb, this);
+        std::string transport_in = image_sub_.getTransport();
+        ROS_INFO("Subscribed using %s for transport", transport_in.c_str());
     }
 
     ~ImageLinkStartpoint()
@@ -94,7 +96,10 @@ public:
                 last_image_ = sensor_msgs::ImageConstPtr();
                 ROS_INFO("Single message republished");
             }
-            ROS_WARN("Single message requested, none available");
+            else
+            {
+                ROS_WARN("Single message requested, none available");
+            }
         }
         else if (req.Rate == 0.0 || req.Rate == -0.0)
         {

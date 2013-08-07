@@ -32,6 +32,8 @@ public:
         image_transport::SubscriberStatusCallback camera_image_cb = boost::bind(&ImageLinkEndpoint::image_cb, this);
         image_pub_ = it_.advertise(relay_topic, 1, camera_image_cb, camera_image_cb, ros::VoidPtr(), latched);
         image_sub_ = it_.subscribe(link_topic_, 1, &ImageLinkEndpoint::image_data_cb, this);
+        std::string transport_in = image_sub_.getTransport();
+        ROS_INFO("Subscribed using %s for transport", transport_in.c_str());
     }
 
     ~ImageLinkEndpoint()
