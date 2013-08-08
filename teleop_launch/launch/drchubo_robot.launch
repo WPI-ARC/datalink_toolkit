@@ -40,6 +40,15 @@
       <param name="rate" type="double" value="100" />
       <remap from="/tf" to="$(arg remapped_tf)" />
     </node>
+    <!-- Sensor head -->
+    <include file="$(hubo_launch)/launch/head_controller_manager.launch" />
+    <include file="$(hubo_launch)/launch/head_controller_spawner.launch" />
+    <node name="laser_scan_controller" pkg="hubo_head_controller" type="laser_scan_controller.py" output="$(arg output)">
+      <remap from="/tf" to="$(arg remapped_tf)" />
+    </node>
+    <node name="point_head_controller" pkg="hubo_head_controller" type="point_head_controller.py" output="$(arg output)">
+      <remap from="/tf" to="$(arg remapped_tf)" />
+    </node>
     <!-- Sensor frames -->
     <include file="$(find hubo_launch)/launch/drchubo_sensor_frames.launch" >
       <arg name="remapped_tf" value="$(arg remapped_tf)" />
@@ -109,8 +118,8 @@
     </include>
     <!-- Upper RGBD camera & pointcloud -->
     <node name="longrange_rgbd_link_start" pkg="opportunistic_link" type="limited_image_link_startpoint" output="$(arg output)">
-      <param name="input_base_topic" type="string" value="/rgbd_longrange/image_color" />
-      <param name="link_base_topic" type="string" value="/link/rgbd_longrange/image_color" />
+      <param name="input_topic" type="string" value="/rgbd_longrange/image_color" />
+      <param name="link_topic" type="string" value="/link/rgbd_longrange/image_color" />
       <param name="link_ctrl" type="string" value="/rgbd_longrange/ctrl" />
       <param name="rate_ctrl" type="string" value="/rgbd_longrange/rate" />
       <param name="default_rate" type="double" value="$(arg default_rate)" />
@@ -126,8 +135,8 @@
     </include>
     <!-- Lower RGBD camera -->
     <node name="shortrange_rgbd_link_start" pkg="opportunistic_link" type="limited_image_link_startpoint" output="$(arg output)">
-      <param name="input_base_topic" type="string" value="/rgbd_shortrange/image_color" />
-      <param name="link_base_topic" type="string" value="/link/rgbd_shortrange/image_color" />
+      <param name="input_topic" type="string" value="/rgbd_shortrange/image_color" />
+      <param name="link_topic" type="string" value="/link/rgbd_shortrange/image_color" />
       <param name="link_ctrl" type="string" value="/rgbd_shortrange/ctrl" />
       <param name="rate_ctrl" type="string" value="/rgbd_shortrange/rate" />
       <param name="default_rate" type="double" value="$(arg default_rate)" />
