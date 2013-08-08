@@ -11,6 +11,16 @@
 
   <machine name="hubo" address="192.168.0.$(arg robot)" user="hubo" password="      " env-loader="/opt/ros/groovy/env.sh" />
 
+  <!-- Sensor head -->
+  <include file="$(find hubo_launch)/launch/head_controller_manager.launch" />
+  <include file="$(find hubo_launch)/launch/head_controller_spawner.launch" />
+  <node name="laser_scan_controller" pkg="hubo_head_controller" type="laser_scan_controller.py" output="$(arg output)">
+    <remap from="/tf" to="$(arg remapped_tf)" />
+  </node>
+  <node name="point_head_controller" pkg="hubo_head_controller" type="point_head_controller.py" output="$(arg output)">
+    <remap from="/tf" to="$(arg remapped_tf)" />
+  </node>
+
   <group ns="drchubo_fullbody_interface">
     <!-- Interface to hardware (runs on chest computer) -->
     <node if="$(arg real)" machine="hubo" name="drchubo_fullbody_feedback_node" pkg="hubo_ach_ros_bridge" type="feedback" output="$(arg output)" >
@@ -38,15 +48,6 @@
       <param name="root_frame" type="string" value="Body_NK2" />
       <param name="laser_joint" type="string" value="NK3" />
       <param name="rate" type="double" value="100" />
-      <remap from="/tf" to="$(arg remapped_tf)" />
-    </node>
-    <!-- Sensor head -->
-    <include file="$(find hubo_launch)/launch/head_controller_manager.launch" />
-    <include file="$(find hubo_launch)/launch/head_controller_spawner.launch" />
-    <node name="laser_scan_controller" pkg="hubo_head_controller" type="laser_scan_controller.py" output="$(arg output)">
-      <remap from="/tf" to="$(arg remapped_tf)" />
-    </node>
-    <node name="point_head_controller" pkg="hubo_head_controller" type="point_head_controller.py" output="$(arg output)">
       <remap from="/tf" to="$(arg remapped_tf)" />
     </node>
     <!-- Sensor frames -->
