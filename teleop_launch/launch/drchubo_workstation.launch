@@ -88,8 +88,8 @@
     </include>
     <!-- Upper RGBD camera & pointcloud -->
     <node name="longrange_rgbd_link_end" pkg="opportunistic_link" type="image_link_endpoint" output="$(arg output)">
-      <param name="relay_base_topic" type="string" value="/$(arg workstation_prefix)/rgbd_longrange/image_color" />
-      <param name="link_base_topic" type="string" value="/link/rgbd_longrange/image_color" />
+      <param name="relay_topic" type="string" value="/$(arg workstation_prefix)/rgbd_longrange/image_color" />
+      <param name="link_topic" type="string" value="/link/rgbd_longrange/image_color" />
       <param name="link_ctrl" type="string" value="/rgbd_longrange/ctrl" />
       <param name="latched" type="boolean" value="true" />
       <param name="image_transport" type="string" value="compressed" />
@@ -104,8 +104,8 @@
     </include>
     <!-- Lower RGBD camera -->
     <node name="shortrange_rgbd_link_end" pkg="opportunistic_link" type="image_link_endpoint" output="$(arg output)">
-      <param name="relay_base_topic" type="string" value="/$(arg workstation_prefix)/rgbd_shortrange/image_color" />
-      <param name="link_base_topic" type="string" value="/link/rgbd_shortrange/image_color" />
+      <param name="relay_topic" type="string" value="/$(arg workstation_prefix)/rgbd_shortrange/image_color" />
+      <param name="link_topic" type="string" value="/link/rgbd_shortrange/image_color" />
       <param name="link_ctrl" type="string" value="/rgbd_shortrange/ctrl" />
       <param name="latched" type="boolean" value="true" />
       <param name="image_transport" type="string" value="compressed" />

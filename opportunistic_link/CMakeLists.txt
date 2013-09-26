@@ -4,7 +4,7 @@ project(opportunistic_link)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS rospy std_msgs sensor_msgs teleop_msgs image_transport message_generation)
+find_package(catkin REQUIRED COMPONENTS rospy std_msgs sensor_msgs pcl pcl_ros teleop_msgs image_transport message_generation)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -22,7 +22,9 @@ catkin_python_setup()
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  std_msgs teleop_msgs
+  std_msgs
+  sensor_msgs
+  teleop_msgs
 )
 
 ###################################
@@ -36,7 +38,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES opportunistic_link
-  CATKIN_DEPENDS rospy std_msgs sensor_msgs teleop_msgs image_transport message_runtime
+  CATKIN_DEPENDS rospy std_msgs sensor_msgs pcl pcl_ros teleop_msgs image_transport message_runtime
   DEPENDS system_lib
 )
 
@@ -46,14 +48,20 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+include_directories(include
+  ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a cpp library
 # add_library(opportunistic_link
 #   src/${PROJECT_NAME}/opportunistic_link.cpp
 # )
 
-## Declare a cpp executable
+## Declare cpp executables
+
+set(CMAKE_CXX_FLAGS "-g")
+
+# Compressed image handlers
 add_executable(limited_image_link_startpoint src/limited_image_link_startpoint.cpp)
 add_dependencies(limited_image_link_startpoint ${catkin_EXPORTED_TARGETS})
 target_link_libraries(limited_image_link_startpoint ${catkin_LIBRARIES})
@@ -61,6 +69,15 @@ target_link_libraries(limited_image_link_startpoint ${catkin_LIBRARIES})
 add_executable(image_link_endpoint src/image_link_endpoint.cpp)
 add_dependencies(image_link_endpoint ${catkin_EXPORTED_TARGETS})
 target_link_libraries(image_link_endpoint ${catkin_LIBRARIES})
+
+# Compressed pointcloud handlers
+add_executable(limited_pointcloud_link_startpoint src/limited_pointcloud_link_startpoint.cpp)
+add_dependencies(limited_pointcloud_link_startpoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(limited_pointcloud_link_startpoint ${catkin_LIBRARIES} z rt)
+
+add_executable(pointcloud_link_endpoint src/pointcloud_link_endpoint.cpp)
+add_dependencies(pointcloud_link_endpoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(pointcloud_link_endpoint ${catkin_LIBRARIES} z rt)
 
 #############
 ## Install ##

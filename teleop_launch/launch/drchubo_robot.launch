@@ -1,7 +1,7 @@
 <launch>
 
   <arg name="real" default="false" />
-  <arg name="robot" default="203" />
+  <arg name="robot" default="192.168.0.203" />
   <arg name="output" default="screen" />
   <arg name="remapped_tf" default="/robot_tf" />
   <arg name="default_rate" default="20" />
@@ -9,17 +9,13 @@
   <arg name="pi/2" value="1.5707963267948966" />
   <arg name="optical_rotate" value="0 0 0 -$(arg pi/2) 0 -$(arg pi/2)" />
 
-  <machine name="hubo" address="192.168.0.$(arg robot)" user="hubo" password="      " env-loader="/opt/ros/groovy/env.sh" />
+  <machine name="hubo" address="$(arg robot)" user="hubo" password="      " env-loader="/opt/ros/groovy/env.sh" />
 
   <!-- Sensor head -->
-  <include file="$(find hubo_launch)/launch/head_controller_manager.launch" />
-  <include file="$(find hubo_launch)/launch/head_controller_spawner.launch" />
-  <node name="laser_scan_controller" pkg="hubo_head_controller" type="laser_scan_controller.py" output="$(arg output)">
-    <remap from="/tf" to="$(arg remapped_tf)" />
-  </node>
-  <node name="point_head_controller" pkg="hubo_head_controller" type="point_head_controller.py" output="$(arg output)">
-    <remap from="/tf" to="$(arg remapped_tf)" />
-  </node>
+  <include file="$(find hubo_launch)/launch/sensor_head_controllers.launch" >
+    <arg name="remapped_tf" value="$(arg remapped_tf)" />
+    <arg name="output" value="$(arg output)" />
+  </include>
 
   <group ns="drchubo_fullbody_interface">
     <!-- Interface to hardware (runs on chest computer) -->

@@ -4,7 +4,7 @@ project(teleop_msgs)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS std_msgs message_generation)
+find_package(catkin REQUIRED COMPONENTS std_msgs sensor_msgs message_generation)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -28,6 +28,7 @@ add_message_files(
   CompressedMessage.msg
   AggregatedMessages.msg
   TopicUpdate.msg
+  CompressedPointCloud2.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -44,6 +45,7 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  sensor_msgs
 )
 
 ###################################
@@ -57,7 +59,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES teleop_msgs
-  CATKIN_DEPENDS std_msgs message_runtime
+  CATKIN_DEPENDS std_msgs sensor_msgs message_runtime
 #  DEPENDS system_lib
 )
 
