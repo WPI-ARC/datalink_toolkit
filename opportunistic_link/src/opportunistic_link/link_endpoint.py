@@ -42,7 +42,7 @@ class LinkEndPoint:
         link_change = LinkControlRequest()
         link_change.Forward = self.link_forward
         rospy.loginfo("Setting transport link state...")
-        self.client.call(link_change)
+        self.call_client(link_change)
         rospy.loginfo("...link state set")
         self.timer = rospy.Timer(rospy.Duration(self.timeout), self.connection_check, oneshot=True)
         self.subscriber = rospy.Subscriber(self.transport_data , eval(self.topic_type), self.sub_cb)
@@ -65,7 +65,7 @@ class LinkEndPoint:
             self.subscriber = rospy.Subscriber(self.transport_data , eval(self.topic_type), self.sub_cb)
             link_change = LinkControlRequest()
             link_change.Forward = self.link_forward
-            self.client.call(link_change)
+            self.call_client(link_change)
             rospy.loginfo("Reconnected link")
         except:
             rospy.logerr("Link appears to be down!")
@@ -79,7 +79,7 @@ class LinkEndPoint:
             link_change = LinkControlRequest()
             link_change.Forward = self.link_forward
             rospy.loginfo("First subscriber connected, starting link data flow...")
-            self.client.call(link_change)
+            self.call_client(link_change)
             rospy.loginfo("...link data flow started")
 
     def sub_disconnect(self, num_subscribers):
@@ -88,8 +88,16 @@ class LinkEndPoint:
             link_change = LinkControlRequest()
             link_change.Forward = self.link_forward
             rospy.loginfo("Last subscriber disconnected, stopping link data flow...")
-            self.client.call(link_change)
+            self.call_client(link_change)
             rospy.loginfo("...link data flow stopped")
+
+    def call_client(self, request):
+        try:
+            response = self.client.call(request)
+            return response
+        except:
+            rospy.logerr("Link control service call failed to connect")
+            return None
 
     def sub_cb(self, msg):
         self.timer.shutdown()
