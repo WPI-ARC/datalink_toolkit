@@ -8,8 +8,14 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/ros/conversions.h>
+#include <pcl/compression/octree_pointcloud_compression.h>
 
-void dealocate_fn(sensor_msgs::PointCloud2 *p)
+void dealocate_sm_fn(sensor_msgs::PointCloud2 *p)
+{
+}
+
+void dealocate_pcl_fn(pcl::PointCloud<pcl::PointXYZRGB> *p)
 {
 }
 
@@ -29,6 +35,7 @@ protected:
     ros::ServiceServer rate_server_;
     std::vector<teleop_msgs::CompressedPointCloud2> pointclouds_;
     pcl::VoxelGrid<sensor_msgs::PointCloud2> voxel_filter_;
+    pcl::octree::PointCloudCompression<pcl::PointXYZRGB> encoder_;
 
 public:
 
@@ -153,7 +160,7 @@ public:
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &st);
             if (filter_size_ > 0.0)
             {
-                sensor_msgs::PointCloud2ConstPtr cloudptr(&cloud, dealocate_fn);
+                sensor_msgs::PointCloud2ConstPtr cloudptr(&cloud, dealocate_sm_fn);
                 voxel_filter_.setInputCloud(cloudptr);
                 voxel_filter_.setLeafSize(filter_size_, filter_size_, filter_size_);
                 voxel_filter_.filter(intermediate);
@@ -262,8 +269,14 @@ public:
         else if (compression_type_ == teleop_msgs::CompressedPointCloud2::PCL)
         {
             compressed_cloud.compression_type = teleop_msgs::CompressedPointCloud2::PCL;
-            ROS_ERROR("PCL compression not implemented");
-            throw std::invalid_argument("PCL compression not implemented");
+            pcl::PointCloud<pcl::PointXYZRGB> converted_cloud;
+            pcl::fromROSMsg(cloud, converted_cloud);
+            pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloudptr(&converted_cloud, dealocate_pcl_fn);
+            std::stringstream compressed_data_stream;
+            encoder_.encodePointCloud(cloudptr, compressed_data_stream);
+            std::string compressed_data = compressed_data_stream.str();
+            std::vector<uint8_t> buffer(compressed_data.begin(), compressed_data.end());
+            compressed_cloud.compressed_data = buffer;
         }
         else
         {

@@ -107,6 +107,17 @@ public:
             ROS_INFO("Attempting to reconnect");
             image_sub_ = it_.subscribe(link_topic_, 1, &ImageLinkEndpoint::image_data_cb, this);
             link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service_);
+            teleop_msgs::LinkControl::Request req;
+            teleop_msgs::LinkControl::Response res;
+            req.Forward = forward_;
+            if (link_ctrl_client_.call(req, res))
+            {
+                ROS_INFO("Contacted startpoint to reset link forwarding");
+            }
+            else
+            {
+                ROS_WARN("Could not contact startpoint to reset link forwarding");
+            }
         }
         catch (...)
         {

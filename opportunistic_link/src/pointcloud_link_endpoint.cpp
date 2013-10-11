@@ -4,6 +4,16 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <teleop_msgs/CompressedPointCloud2.h>
 #include <zlib.h>
+#include <time.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/ros/conversions.h>
+#include <pcl/compression/octree_pointcloud_compression.h>
+
+void dealocate_pcl_fn(pcl::PointCloud<pcl::PointXYZRGB> *p)
+{
+}
 
 class Pointcloud2LinkEndpoint
 {
@@ -18,6 +28,7 @@ protected:
     ros::Timer link_watchdog_;
     std::string link_topic_;
     std::string link_ctrl_service_;
+    pcl::octree::PointCloudCompression<pcl::PointXYZRGB> decoder_;
 
 public:
 
@@ -120,7 +131,28 @@ public:
         }
         else if (compressed.compression_type == teleop_msgs::CompressedPointCloud2::PCL)
         {
-            ;
+            if (compressed.compressed_data.size() == 0)
+            {
+                ROS_WARN("Decompressor received an empty pointcloud");
+            }
+            else
+            {
+                pcl::PointCloud<pcl::PointXYZRGB> uncompressed_cloud;
+                pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudptr(&uncompressed_cloud, dealocate_pcl_fn);
+                std::stringstream compressed_data_stream;
+                compressed_data_stream.rdbuf()->pubsetbuf(reinterpret_cast<char*>(&compressed.compressed_data[0]), compressed.compressed_data.size());
+                decoder_.decodePointCloud(compressed_data_stream, cloudptr);
+                sensor_msgs::PointCloud2 new_cloud;
+                pcl::toROSMsg(uncompressed_cloud, new_cloud);
+                cloud.data = new_cloud.data;
+                cloud.is_dense = new_cloud.is_dense;
+                cloud.is_bigendian = new_cloud.is_bigendian;
+                cloud.fields = new_cloud.fields;
+                cloud.height = new_cloud.height;
+                cloud.width = new_cloud.width;
+                cloud.point_step = new_cloud.point_step;
+                cloud.row_step = new_cloud.row_step;
+            }
         }
         else if (compressed.compression_type == teleop_msgs::CompressedPointCloud2::NONE)
         {
@@ -186,6 +218,17 @@ public:
             ROS_INFO("Attempting to reconnect");
             compressed_sub_ = nh_.subscribe(link_topic_, 1, &Pointcloud2LinkEndpoint::pointcloud_data_cb, this);
             link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service_);
+            teleop_msgs::LinkControl::Request req;
+            teleop_msgs::LinkControl::Response res;
+            req.Forward = forward_;
+            if (link_ctrl_client_.call(req, res))
+            {
+                ROS_INFO("Contacted startpoint to reset link forwarding");
+            }
+            else
+            {
+                ROS_WARN("Could not contact startpoint to reset link forwarding");
+            }
         }
         catch (...)
         {
