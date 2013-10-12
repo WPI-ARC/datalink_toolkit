@@ -4,7 +4,7 @@ project(teleop_launch)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS openni_launch rospy)
+find_package(catkin REQUIRED COMPONENTS rospy)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -50,7 +50,7 @@ find_package(catkin REQUIRED COMPONENTS openni_launch rospy)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES teleop_launch
-#  CATKIN_DEPENDS openni_launch rospy
+  CATKIN_DEPENDS rospy
 #  DEPENDS system_lib
 )
 
