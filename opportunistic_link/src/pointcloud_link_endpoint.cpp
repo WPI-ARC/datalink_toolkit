@@ -21,6 +21,7 @@ protected:
 
     ros::NodeHandle nh_;
     bool forward_;
+    bool override_timestamps_;
     ros::Publisher pointcloud_pub_;
     ros::Subscriber compressed_sub_;
     ros::ServiceClient link_ctrl_client_;
@@ -32,9 +33,10 @@ protected:
 
 public:
 
-    Pointcloud2LinkEndpoint(ros::NodeHandle &n, std::string relay_topic, std::string link_topic, std::string link_ctrl_service, bool latched) : nh_(n)
+    Pointcloud2LinkEndpoint(ros::NodeHandle &n, std::string relay_topic, std::string link_topic, std::string link_ctrl_service, bool override_timestamps, bool latched) : nh_(n)
     {
         forward_ = false;
+        override_timestamps_ = override_timestamps;
         link_topic_ = link_topic;
         link_ctrl_service_ = link_ctrl_service;
         link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service_);
@@ -163,6 +165,10 @@ public:
             ROS_ERROR("Unsupported compression type");
             throw std::invalid_argument("Unsupported compression type");
         }
+        if (override_timestamps_)
+        {
+            cloud.header.stamp = ros::Time::now();
+        }
         return cloud;
     }
 
@@ -249,11 +255,13 @@ int main(int argc, char** argv)
     std::string link_topic;
     std::string link_ctrl_service;
     bool latched;
+    bool override_timestamps;
     nhp.param(std::string("relay_topic"), relay_topic, std::string("relay/camera/depth/points_xyzrgb"));
     nhp.param(std::string("link_topic"), link_topic, std::string("link/camera/depth/compressed"));
     nhp.param(std::string("link_ctrl"), link_ctrl_service, std::string("camera/ctrl"));
     nhp.param(std::string("latched"), latched, false);
-    Pointcloud2LinkEndpoint endpoint(nh, relay_topic, link_topic, link_ctrl_service, latched);
+    nhp.param(std::string("override_timestamps"), override_timestamps, true);
+    Pointcloud2LinkEndpoint endpoint(nh, relay_topic, link_topic, link_ctrl_service, override_timestamps, latched);
     ROS_INFO("...startup complete");
     endpoint.loop();
     return 0;
