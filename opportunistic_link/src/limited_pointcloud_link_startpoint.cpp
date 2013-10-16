@@ -141,7 +141,7 @@ public:
         {
             forward_rate_ = 0.0;
             res.State = forward_rate_;
-            ROS_INFO("Camera republishing paused");
+            ROS_INFO("Pointcloud republishing paused");
         }
         else
         {
