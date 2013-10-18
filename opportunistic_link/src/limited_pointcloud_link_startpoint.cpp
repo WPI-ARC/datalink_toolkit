@@ -11,11 +11,11 @@
 #include <pcl/ros/conversions.h>
 #include <pcl/compression/octree_pointcloud_compression.h>
 
-void dealocate_sm_fn(sensor_msgs::PointCloud2 *p)
+void dealocate_sm_fn(sensor_msgs::PointCloud2* p)
 {
 }
 
-void dealocate_pcl_fn(pcl::PointCloud<pcl::PointXYZRGB> *p)
+void dealocate_pcl_fn(pcl::PointCloud<pcl::PointXYZRGB>* p)
 {
 }
 

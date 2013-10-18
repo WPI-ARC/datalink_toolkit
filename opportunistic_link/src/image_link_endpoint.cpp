@@ -27,7 +27,7 @@ public:
         forward_ = false;
         link_topic_ = link_topic;
         link_ctrl_service_ = link_ctrl_service;
-        link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service);
+        link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service_);
         link_watchdog_ = nh_.createTimer(ros::Duration(10.0), &ImageLinkEndpoint::link_watchdog_cb, this, true);
         image_transport::SubscriberStatusCallback camera_image_cb = boost::bind(&ImageLinkEndpoint::image_cb, this);
         image_pub_ = it_.advertise(relay_topic, 1, camera_image_cb, camera_image_cb, ros::VoidPtr(), latched);

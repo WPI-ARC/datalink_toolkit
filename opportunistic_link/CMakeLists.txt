@@ -70,6 +70,15 @@ add_executable(image_link_endpoint src/image_link_endpoint.cpp)
 add_dependencies(image_link_endpoint ${catkin_EXPORTED_TARGETS})
 target_link_libraries(image_link_endpoint ${catkin_LIBRARIES})
 
+# Compressed camera handlers
+add_executable(limited_camera_link_startpoint src/limited_camera_link_startpoint.cpp)
+add_dependencies(limited_camera_link_startpoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(limited_camera_link_startpoint ${catkin_LIBRARIES})
+
+add_executable(camera_link_endpoint src/camera_link_endpoint.cpp)
+add_dependencies(camera_link_endpoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(camera_link_endpoint ${catkin_LIBRARIES})
+
 # Compressed pointcloud handlers
 add_executable(limited_pointcloud_link_startpoint src/limited_pointcloud_link_startpoint.cpp)
 add_dependencies(limited_pointcloud_link_startpoint ${catkin_EXPORTED_TARGETS})
