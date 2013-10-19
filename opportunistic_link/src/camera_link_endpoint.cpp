@@ -186,10 +186,10 @@ int main(int argc, char** argv)
     std::string camera_base_topic;
     std::string link_ctrl_service;
     bool latched;
-    nhp.param(std::string("image_topic"), image_topic, std::string("link/camera/rgb/image"));
-    nhp.param(std::string("info_topic"), info_topic, std::string("link/camera/rgb/camera_info"));
-    nhp.param(std::string("camera_base_topic"), camera_base_topic, std::string("relay/camera/rgb/image"));
-    nhp.param(std::string("link_ctrl_service"), link_ctrl_service, std::string("camera/rgb/ctrl"));
+    nhp.param(std::string("link_image_topic"), image_topic, std::string("link/camera/rgb/image"));
+    nhp.param(std::string("link_info_topic"), info_topic, std::string("link/camera/rgb/camera_info"));
+    nhp.param(std::string("relay_base_topic"), camera_base_topic, std::string("relay/camera/rgb/image"));
+    nhp.param(std::string("link_ctrl"), link_ctrl_service, std::string("camera/rgb/ctrl"));
     nhp.param(std::string("latched"), latched, false);
     CameraLinkEndpoint endpoint(nh, image_topic, info_topic, camera_base_topic, link_ctrl_service, latched);
     ROS_INFO("...startup complete");
