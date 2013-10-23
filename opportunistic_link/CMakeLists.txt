@@ -4,7 +4,8 @@ project(opportunistic_link)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS rospy std_msgs sensor_msgs pcl pcl_ros teleop_msgs image_transport message_generation)
+find_package(catkin REQUIRED COMPONENTS rospy std_msgs sensor_msgs pcl pcl_ros teleop_msgs image_transport cv_bridge message_generation)
+find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -38,8 +39,8 @@ catkin_python_setup()
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES opportunistic_link
-  CATKIN_DEPENDS rospy std_msgs sensor_msgs pcl pcl_ros teleop_msgs image_transport message_runtime
-  DEPENDS system_lib
+  CATKIN_DEPENDS rospy std_msgs sensor_msgs pcl pcl_ros teleop_msgs image_transport cv_bridge message_runtime
+  DEPENDS system_lib OpenCV
 )
 
 ###########
@@ -48,9 +49,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include
-  ${catkin_INCLUDE_DIRS}
-)
+include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 ## Declare a cpp library
 # add_library(opportunistic_link
@@ -60,6 +59,11 @@ include_directories(include
 ## Declare cpp executables
 
 set(CMAKE_CXX_FLAGS "-g")
+
+# Camera resizing node
+add_executable(camera_resizer src/camera_resizer.cpp)
+add_dependencies(camera_resizer ${catkin_EXPORTED_TARGETS})
+target_link_libraries(camera_resizer ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 # Compressed image handlers
 add_executable(limited_image_link_startpoint src/limited_image_link_startpoint.cpp)
