@@ -73,10 +73,12 @@ public:
         cv::Mat intermediate;
         if (convert_to_bw_)
         {
+            // Convery to grayscale
             cv::cvtColor(cv_ptr->image, intermediate, CV_BGR2GRAY);
         }
         else
         {
+            // Keep RGB
             intermediate = cv_ptr->image;
         }
         // Resize image
