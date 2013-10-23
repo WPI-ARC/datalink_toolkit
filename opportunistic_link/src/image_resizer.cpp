@@ -7,7 +7,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <opencv/cv.h>
 
-class CameraResizer
+class ImageResizer
 {
 protected:
 
@@ -16,23 +16,23 @@ protected:
     int resized_width_;
     int resized_height_;
     bool convert_to_bw_;
-    image_transport::CameraSubscriber camera_sub_;
-    image_transport::CameraPublisher camera_pub_;
+    image_transport::Subscriber image_sub_;
+    image_transport::Publisher image_pub_;
 
 public:
 
-    CameraResizer(ros::NodeHandle &n, std::string camera_base_topic, std::string resized_base_topic, int resized_width, int resized_height, bool convert_to_bw) : nh_(n), it_(n)
+    ImageResizer(ros::NodeHandle &n, std::string camera_base_topic, std::string resized_base_topic, int resized_width, int resized_height, bool convert_to_bw) : nh_(n), it_(n)
     {
         resized_width_ = resized_width;
         resized_height_ = resized_height;
         convert_to_bw_ = convert_to_bw;
-        camera_sub_ = it_.subscribeCamera(camera_base_topic, 1, &CameraResizer::camera_cb, this);
-        camera_pub_ = it_.advertiseCamera(resized_base_topic, 1, true);
-        std::string transport_in = camera_sub_.getTransport();
+        image_sub_ = it_.subscribe(camera_base_topic, 1, &ImageResizer::camera_cb, this);
+        image_pub_ = it_.advertise(resized_base_topic, 1, true);
+        std::string transport_in = image_sub_.getTransport();
         ROS_INFO("Subscribed using %s for transport", transport_in.c_str());
     }
 
-    ~CameraResizer()
+    ~ImageResizer()
     {
     }
 
@@ -44,7 +44,7 @@ public:
         }
     }
 
-    void camera_cb(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& info)
+    void camera_cb(const sensor_msgs::ImageConstPtr& image)
     {
         // Convert to OpenCV
         cv_bridge::CvImagePtr cv_ptr;
@@ -104,16 +104,15 @@ public:
             converted = cv_bridge::CvImage(image->header, image->encoding, resized);
         }
         converted.toImageMsg(resized_image);
-        sensor_msgs::CameraInfo resized_info(*info);
         // Republish
-        camera_pub_.publish(resized_image, resized_info);
+        image_pub_.publish(resized_image);
     }
 };
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "camera_resizer");
-    ROS_INFO("Starting camera resizer...");
+    ros::init(argc, argv, "image_resizer");
+    ROS_INFO("Starting image resizer...");
     ros::NodeHandle nh;
     ros::NodeHandle nhp("~");
     std::string camera_base_topic;
@@ -126,9 +125,8 @@ int main(int argc, char** argv)
     nhp.param(std::string("resized_width"), resized_width, 160);
     nhp.param(std::string("resized_height"), resized_height, 120);
     nhp.param(std::string("convert_to_bw"), convert_to_bw, false);
-    CameraResizer resizer(nh, camera_base_topic, resized_base_topic, resized_width, resized_height, convert_to_bw);
+    ImageResizer resizer(nh, camera_base_topic, resized_base_topic, resized_width, resized_height, convert_to_bw);
     ROS_INFO("...startup complete");
     resizer.loop();
     return 0;
 }
-

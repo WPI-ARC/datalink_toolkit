@@ -60,6 +60,11 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 set(CMAKE_CXX_FLAGS "-g")
 
+# Image resizing node
+add_executable(image_resizer src/image_resizer.cpp)
+add_dependencies(image_resizer ${catkin_EXPORTED_TARGETS})
+target_link_libraries(image_resizer ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
 # Camera resizing node
 add_executable(camera_resizer src/camera_resizer.cpp)
 add_dependencies(camera_resizer ${catkin_EXPORTED_TARGETS})
