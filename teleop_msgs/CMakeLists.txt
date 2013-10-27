@@ -38,7 +38,11 @@ add_service_files(
   FILES
   LinkControl.srv
   RateControl.srv
+  QualityControl.srv
   RequestMessage.srv
+  RequestImage.srv
+  RequestCamera.srv
+  RequestPointCloud2.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

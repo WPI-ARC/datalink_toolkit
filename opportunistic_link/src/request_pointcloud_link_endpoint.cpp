@@ -1,0 +1,191 @@
+#include <ros/ros.h>
+#include <time.h>
+#include <teleop_msgs/RequestPointCloud2.h>
+#include <teleop_msgs/RateControl.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <teleop_msgs/CompressedPointCloud2.h>
+#include <opportunistic_link/pointcloud_compression.h>
+
+class RequestPointcloud2LinkEndpoint
+{
+protected:
+
+    ros::NodeHandle nh_;
+    bool forward_;
+    double forward_rate_;
+    ros::Rate repub_rate_;
+    bool override_timestamps_;
+    ros::Publisher pointcloud_pub_;
+    ros::ServiceClient data_client_;
+    ros::ServiceServer rate_server_;
+    uint32_t pointcloud_subs_;
+    pointcloud_compression::PointCloudHandler decompressor_;
+
+public:
+
+    RequestPointcloud2LinkEndpoint(ros::NodeHandle &n, std::string relay_topic, std::string data_service, std::string rate_ctrl_service, double default_rate, bool override_timestamps, bool latched) : nh_(n), repub_rate_(20.0)
+    {
+        forward_ = false;
+        forward_rate_ = default_rate;
+        if ((forward_rate_ != INFINITY) && (forward_rate_ > 0.0) && (isnan(forward_rate_) == false))
+        {
+            repub_rate_ = ros::Rate(forward_rate_);
+        }
+        override_timestamps_ = override_timestamps;
+        data_client_ = nh_.serviceClient<teleop_msgs::RequestPointCloud2>(data_service);
+        rate_server_ = nh_.advertiseService(rate_ctrl_service, &RequestPointcloud2LinkEndpoint::rate_cb, this);
+        ros::SubscriberStatusCallback pointcloud_sub_cb = boost::bind(&RequestPointcloud2LinkEndpoint::subscriber_cb, this);
+        pointcloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(relay_topic, 1, pointcloud_sub_cb, pointcloud_sub_cb, ros::VoidPtr(), latched);
+    }
+
+    ~RequestPointcloud2LinkEndpoint()
+    {
+    }
+
+    void loop()
+    {
+        while (ros::ok())
+        {
+            if (forward_ && (forward_rate_ == INFINITY))
+            {
+                ROS_INFO("Requesting a pointcloud");
+                try
+                {
+                    get_pointcloud();
+                }
+                catch (...)
+                {
+                    ROS_WARN("Failure requesting a pointcloud, unable to republish");
+                }
+            }
+            if (forward_ && (forward_rate_ != INFINITY) && (forward_rate_ != 0.0))
+            {
+                ROS_INFO("Requesting a pointcloud");
+                try
+                {
+                    get_pointcloud();
+                }
+                catch (...)
+                {
+                    ROS_WARN("Failure requesting a pointcloud, unable to republish");
+                }
+                repub_rate_.sleep();
+            }
+            ros::spinOnce();
+        }
+    }
+
+    void get_pointcloud()
+    {
+        teleop_msgs::RequestPointCloud2::Request req;
+        teleop_msgs::RequestPointCloud2::Response res;
+        if (data_client_.call(req, res))
+        {
+            if (res.available)
+            {
+                // Decompress pointcloud
+                struct timespec st, et;
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &st);
+                sensor_msgs::PointCloud2 cloud = decompressor_.decompress_pointcloud2(res.cloud);
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &et);
+                float secs = (float)(et.tv_sec - st.tv_sec);
+                secs = secs + (float)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
+                float ratio = ((float)cloud.data.size() / (float)res.cloud.compressed_data.size()) * 100.0;
+                ROS_DEBUG("Decompression of %f %% took %f seconds", ratio, secs);
+                if (override_timestamps_)
+                {
+                    cloud.header.stamp = ros::Time::now();
+                }
+                pointcloud_pub_.publish(cloud);
+            }
+            else
+            {
+                ROS_ERROR("Contacted startpoint, but no pointclouds available");
+            }
+        }
+        else
+        {
+            ROS_ERROR("Unable to contact startpoint");
+            throw std::invalid_argument("Unable to contact startpoint");
+        }
+    }
+
+    bool rate_cb(teleop_msgs::RateControl::Request& req, teleop_msgs::RateControl::Response& res)
+    {
+        if (req.Rate > 0.0 && (req.Rate != INFINITY) && (req.Rate != NAN))
+        {
+            repub_rate_ = ros::Rate(req.Rate);
+            forward_rate_ = req.Rate;
+            res.State = forward_rate_;
+            ROS_INFO("Set republish rate to %f", forward_rate_);
+        }
+        else if (req.Rate == INFINITY)
+        {
+            forward_rate_ = INFINITY;
+            ROS_INFO("Set republish rate to native");
+        }
+        else if ((req.Rate == -1.0) && (forward_rate_ != INFINITY))
+        {
+            try
+            {
+                get_pointcloud();
+            }
+            catch (...)
+            {
+                ROS_WARN("Single message requested, unable to republish");
+            }
+        }
+        else if (req.Rate == 0.0 || req.Rate == -0.0)
+        {
+            forward_rate_ = 0.0;
+            res.State = forward_rate_;
+            ROS_INFO("Pointcloud republishing paused");
+        }
+        else
+        {
+            ROS_ERROR("Invalid publish rate requested");
+        }
+        res.State = forward_rate_;
+        return true;
+    }
+
+    void subscriber_cb()
+    {
+        pointcloud_subs_ = pointcloud_pub_.getNumSubscribers();
+        if (pointcloud_subs_ == 1)
+        {
+            forward_ = true;
+            ROS_INFO("Turned forwarding on");
+        }
+        else if (pointcloud_subs_ < 1)
+        {
+            forward_ = false;
+            ROS_INFO("Turned forwarding off");
+        }
+    }
+
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, "request_pointcloud_link_endpoint");
+    ROS_INFO("Starting request pointcloud link endpoint...");
+    ros::NodeHandle nh;
+    ros::NodeHandle nhp("~");
+    std::string relay_topic;
+    std::string data_service;
+    std::string rate_ctrl_service;
+    bool latched;
+    double default_rate;
+    bool override_timestamps;
+    nhp.param(std::string("relay_topic"), relay_topic, std::string("camera/relay/depth/points_xyzrgb"));
+    nhp.param(std::string("data_service"), data_service, std::string("camera/depth/data"));
+    nhp.param(std::string("rate_ctrl"), rate_ctrl_service, std::string("camera/depth/rate"));
+    nhp.param(std::string("latched"), latched, false);
+    nhp.param(std::string("default_rate"), default_rate, (double)INFINITY);
+    nhp.param(std::string("override_timestamps"), override_timestamps, true);
+    RequestPointcloud2LinkEndpoint endpoint(nh, relay_topic, data_service, rate_ctrl_service, default_rate, override_timestamps, latched);
+    ROS_INFO("...startup complete");
+    endpoint.loop();
+    return 0;
+}

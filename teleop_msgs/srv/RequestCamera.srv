@@ -1,0 +1,7 @@
+bool reset_encoder
+uint8 quality
+---
+bool available
+string encoding
+sensor_msgs/CameraInfo info
+sensor_msgs/CompressedImage image

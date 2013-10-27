@@ -40,7 +40,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES opportunistic_link
   CATKIN_DEPENDS rospy std_msgs sensor_msgs pcl pcl_ros teleop_msgs image_transport cv_bridge message_runtime
-  DEPENDS system_lib OpenCV
+  DEPENDS system_lib z rt OpenCV
 )
 
 ###########
@@ -51,14 +51,21 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
+set(CMAKE_CXX_FLAGS "-g")
+
 ## Declare a cpp library
-# add_library(opportunistic_link
-#   src/${PROJECT_NAME}/opportunistic_link.cpp
-# )
+
+# Image compression library
+add_library(image_compression SHARED src/image_compression.cpp)
+add_dependencies(image_compression ${catkin_EXPORTED_TARGETS})
+target_link_libraries(image_compression ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} z)
+
+# Pointcloud compression library
+add_library(pointcloud_compression SHARED src/pointcloud_compression.cpp)
+add_dependencies(pointcloud_compression ${catkin_EXPORTED_TARGETS})
+target_link_libraries(pointcloud_compression ${catkin_LIBRARIES} z)
 
 ## Declare cpp executables
-
-set(CMAKE_CXX_FLAGS "-g")
 
 # Image resizing node
 add_executable(image_resizer src/image_resizer.cpp)
@@ -70,6 +77,15 @@ add_executable(camera_resizer src/camera_resizer.cpp)
 add_dependencies(camera_resizer ${catkin_EXPORTED_TARGETS})
 target_link_libraries(camera_resizer ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
+# Service-based compressed image handlers
+add_executable(request_image_link_startpoint src/request_image_link_startpoint.cpp)
+add_dependencies(request_image_link_startpoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(request_image_link_startpoint image_compression ${catkin_LIBRARIES})
+
+add_executable(request_image_link_endpoint src/request_image_link_endpoint.cpp)
+add_dependencies(request_image_link_endpoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(request_image_link_endpoint image_compression ${catkin_LIBRARIES})
+
 # Compressed image handlers
 add_executable(limited_image_link_startpoint src/limited_image_link_startpoint.cpp)
 add_dependencies(limited_image_link_startpoint ${catkin_EXPORTED_TARGETS})
@@ -78,6 +94,15 @@ target_link_libraries(limited_image_link_startpoint ${catkin_LIBRARIES})
 add_executable(image_link_endpoint src/image_link_endpoint.cpp)
 add_dependencies(image_link_endpoint ${catkin_EXPORTED_TARGETS})
 target_link_libraries(image_link_endpoint ${catkin_LIBRARIES})
+
+# Service-based compressed camera handlers
+add_executable(request_camera_link_startpoint src/request_camera_link_startpoint.cpp)
+add_dependencies(request_camera_link_startpoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(request_camera_link_startpoint image_compression ${catkin_LIBRARIES})
+
+add_executable(request_camera_link_endpoint src/request_camera_link_endpoint.cpp)
+add_dependencies(request_camera_link_endpoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(request_camera_link_endpoint image_compression ${catkin_LIBRARIES})
 
 # Compressed camera handlers
 add_executable(limited_camera_link_startpoint src/limited_camera_link_startpoint.cpp)
@@ -88,14 +113,23 @@ add_executable(camera_link_endpoint src/camera_link_endpoint.cpp)
 add_dependencies(camera_link_endpoint ${catkin_EXPORTED_TARGETS})
 target_link_libraries(camera_link_endpoint ${catkin_LIBRARIES})
 
+# Service-based compressed pointcloud handlers
+add_executable(request_pointcloud_link_startpoint src/request_pointcloud_link_startpoint.cpp)
+add_dependencies(request_pointcloud_link_startpoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(request_pointcloud_link_startpoint pointcloud_compression ${catkin_LIBRARIES} rt)
+
+add_executable(request_pointcloud_link_endpoint src/request_pointcloud_link_endpoint.cpp)
+add_dependencies(request_pointcloud_link_endpoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(request_pointcloud_link_endpoint pointcloud_compression ${catkin_LIBRARIES} rt)
+
 # Compressed pointcloud handlers
 add_executable(limited_pointcloud_link_startpoint src/limited_pointcloud_link_startpoint.cpp)
 add_dependencies(limited_pointcloud_link_startpoint ${catkin_EXPORTED_TARGETS})
-target_link_libraries(limited_pointcloud_link_startpoint ${catkin_LIBRARIES} z rt)
+target_link_libraries(limited_pointcloud_link_startpoint pointcloud_compression ${catkin_LIBRARIES} rt)
 
 add_executable(pointcloud_link_endpoint src/pointcloud_link_endpoint.cpp)
 add_dependencies(pointcloud_link_endpoint ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pointcloud_link_endpoint ${catkin_LIBRARIES} z rt)
+target_link_libraries(pointcloud_link_endpoint pointcloud_compression ${catkin_LIBRARIES} rt)
 
 #############
 ## Install ##

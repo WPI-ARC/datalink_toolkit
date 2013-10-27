@@ -1,0 +1,4 @@
+bool reset_encoder
+---
+bool available
+teleop_msgs/CompressedPointCloud2 cloud

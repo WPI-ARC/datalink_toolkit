@@ -1,19 +1,10 @@
 #include <ros/ros.h>
+#include <time.h>
 #include <teleop_msgs/LinkControl.h>
 #include <teleop_msgs/RateControl.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <teleop_msgs/CompressedPointCloud2.h>
-#include <zlib.h>
-#include <time.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/ros/conversions.h>
-#include <pcl/compression/octree_pointcloud_compression.h>
-
-void dealocate_pcl_fn(pcl::PointCloud<pcl::PointXYZRGB>* p)
-{
-}
+#include <opportunistic_link/pointcloud_compression.h>
 
 class Pointcloud2LinkEndpoint
 {
@@ -29,7 +20,7 @@ protected:
     ros::Timer link_watchdog_;
     std::string link_topic_;
     std::string link_ctrl_service_;
-    pcl::octree::PointCloudCompression<pcl::PointXYZRGB> decoder_;
+    pointcloud_compression::PointCloudHandler decompressor_;
 
 public:
 
@@ -64,12 +55,16 @@ public:
         {
             struct timespec st, et;
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &st);
-            sensor_msgs::PointCloud2 cloud = decompress_pointcloud2(compressed);
+            sensor_msgs::PointCloud2 cloud = decompressor_.decompress_pointcloud2(compressed);
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &et);
             float secs = (float)(et.tv_sec - st.tv_sec);
             secs = secs + (float)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
             float ratio = ((float)cloud.data.size() / (float)compressed.compressed_data.size()) * 100.0;
             ROS_DEBUG("Decompression of %f %% took %f seconds", ratio, secs);
+            if (override_timestamps_)
+            {
+                cloud.header.stamp = ros::Time::now();
+            }
             pointcloud_pub_.publish(cloud);
         }
         catch (...)
@@ -78,98 +73,6 @@ public:
         }
         link_watchdog_.stop();
         link_watchdog_ = nh_.createTimer(ros::Duration(10.0), &Pointcloud2LinkEndpoint::link_watchdog_cb, this, true);
-    }
-
-    sensor_msgs::PointCloud2 decompress_pointcloud2(teleop_msgs::CompressedPointCloud2& compressed)
-    {
-        sensor_msgs::PointCloud2 cloud;
-        cloud.header.stamp = compressed.header.stamp;
-        cloud.header.frame_id = compressed.header.frame_id;
-        cloud.is_dense = compressed.is_dense;
-        cloud.is_bigendian = compressed.is_bigendian;
-        cloud.fields = compressed.fields;
-        cloud.height = compressed.height;
-        cloud.width = compressed.width;
-        cloud.point_step = compressed.point_step;
-        cloud.row_step = compressed.row_step;
-        if (compressed.compression_type == teleop_msgs::CompressedPointCloud2::ZLIB)
-        {
-            // Decompress the pointcloud data using ZLIB's DEFLATE compression
-            z_stream strm;
-            std::vector<uint8_t> buffer;
-            const size_t BUFSIZE = 1024 * 1024;
-            uint8_t temp_buffer[BUFSIZE];
-            strm.zalloc = Z_NULL;
-            strm.zfree = Z_NULL;
-            strm.opaque = Z_NULL;
-            int ret = inflateInit(&strm);
-            if (ret != Z_OK)
-            {
-                (void)inflateEnd(&strm);
-                ROS_ERROR("ZLIB unable to init inflate stream");
-                throw std::invalid_argument("ZLIB unable to init inflate stream");
-            }
-            strm.avail_in = compressed.compressed_data.size();
-            strm.next_in = reinterpret_cast<uint8_t *>(compressed.compressed_data.data());
-            do
-            {
-                strm.next_out = temp_buffer;
-                strm.avail_out = BUFSIZE;
-                ret = inflate(&strm, Z_NO_FLUSH);
-                if (buffer.size() < strm.total_out)
-                {
-                    buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE - strm.avail_out);
-                }
-            }
-            while (ret == Z_OK);
-            if (ret != Z_STREAM_END)
-            {
-                (void)inflateEnd(&strm);
-                ROS_ERROR("ZLIB unable to inflate stream with ret=%d", ret);
-                throw std::invalid_argument("ZLIB unable to inflate stream");
-            }
-            (void)inflateEnd(&strm);
-            cloud.data.swap(buffer);
-        }
-        else if (compressed.compression_type == teleop_msgs::CompressedPointCloud2::PCL)
-        {
-            if (compressed.compressed_data.size() == 0)
-            {
-                ROS_WARN("Decompressor received an empty pointcloud");
-            }
-            else
-            {
-                pcl::PointCloud<pcl::PointXYZRGB> uncompressed_cloud;
-                pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudptr(&uncompressed_cloud, dealocate_pcl_fn);
-                std::stringstream compressed_data_stream;
-                compressed_data_stream.rdbuf()->pubsetbuf(reinterpret_cast<char*>(&compressed.compressed_data[0]), compressed.compressed_data.size());
-                decoder_.decodePointCloud(compressed_data_stream, cloudptr);
-                sensor_msgs::PointCloud2 new_cloud;
-                pcl::toROSMsg(uncompressed_cloud, new_cloud);
-                cloud.data = new_cloud.data;
-                cloud.is_dense = new_cloud.is_dense;
-                cloud.is_bigendian = new_cloud.is_bigendian;
-                cloud.fields = new_cloud.fields;
-                cloud.height = new_cloud.height;
-                cloud.width = new_cloud.width;
-                cloud.point_step = new_cloud.point_step;
-                cloud.row_step = new_cloud.row_step;
-            }
-        }
-        else if (compressed.compression_type == teleop_msgs::CompressedPointCloud2::NONE)
-        {
-            cloud.data = compressed.compressed_data;
-        }
-        else
-        {
-            ROS_ERROR("Unsupported compression type");
-            throw std::invalid_argument("Unsupported compression type");
-        }
-        if (override_timestamps_)
-        {
-            cloud.header.stamp = ros::Time::now();
-        }
-        return cloud;
     }
 
     void subscriber_cb()
@@ -258,7 +161,7 @@ int main(int argc, char** argv)
     bool override_timestamps;
     nhp.param(std::string("relay_topic"), relay_topic, std::string("relay/camera/depth/points_xyzrgb"));
     nhp.param(std::string("link_topic"), link_topic, std::string("link/camera/depth/compressed"));
-    nhp.param(std::string("link_ctrl"), link_ctrl_service, std::string("camera/ctrl"));
+    nhp.param(std::string("link_ctrl"), link_ctrl_service, std::string("camera/depth/ctrl"));
     nhp.param(std::string("latched"), latched, false);
     nhp.param(std::string("override_timestamps"), override_timestamps, true);
     Pointcloud2LinkEndpoint endpoint(nh, relay_topic, link_topic, link_ctrl_service, override_timestamps, latched);
