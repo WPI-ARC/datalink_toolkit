@@ -1,4 +1,5 @@
 bool reset_encoder
+float32 filter_size
 ---
 bool available
 teleop_msgs/CompressedPointCloud2 cloud

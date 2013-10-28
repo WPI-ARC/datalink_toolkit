@@ -39,6 +39,7 @@ add_service_files(
   LinkControl.srv
   RateControl.srv
   QualityControl.srv
+  FilterControl.srv
   RequestMessage.srv
   RequestImage.srv
   RequestCamera.srv

@@ -31,6 +31,8 @@ sensor_msgs::Image ImageHandler::decompress_image(sensor_msgs::CompressedImage& 
 sensor_msgs::CompressedImage ImageHandler::compress_image(const sensor_msgs::Image& image, int quality)
 {
     sensor_msgs::CompressedImage compressed;
+    compressed.header.frame_id = image.header.frame_id;
+    compressed.header.stamp = image.header.stamp;
     cv_bridge::CvImagePtr cv_ptr;
     cv_ptr = cv_bridge::toCvCopy(image);
     cv::Mat cv_image = cv_ptr->image;
@@ -40,11 +42,11 @@ sensor_msgs::CompressedImage ImageHandler::compress_image(const sensor_msgs::Ima
     bool ret = cv::imencode(".jpg", cv_image, compressed.data, encoding_params);
     if (ret)
     {
-        ROS_INFO("OpenCV encoding success");
+        ROS_DEBUG("OpenCV encoding success");
     }
     else
     {
-        ROS_INFO("OpenCV encoding failure");
+        ROS_ERROR("OpenCV encoding failure");
     }
     return compressed;
 }
