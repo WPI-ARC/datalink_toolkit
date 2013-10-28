@@ -107,7 +107,7 @@ public:
             }
             else
             {
-                ROS_ERROR("Contacted startpoint, but no images available");
+                ROS_WARN("Contacted startpoint, but no images available");
             }
         }
         else

@@ -107,7 +107,7 @@ public:
             }
             else
             {
-                ROS_ERROR("Contacted startpoint, but no pointclouds available");
+                ROS_WARN("Contacted startpoint, but no pointclouds available");
             }
         }
         else
