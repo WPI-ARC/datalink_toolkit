@@ -7,6 +7,7 @@
 #################################################
 
 import rospy
+import math
 from std_msgs.msg import *
 from teleop_msgs.srv import *
 import request_link_endpoint
@@ -28,35 +29,39 @@ class SubscribeHandler:
 
 class RequestLinkEndPoint:
 
-    def __init__(self, output_topic_name, topic_type, request_service, default_rate, rebuild_delay, latched):
+    def __init__(self, output_topic_name, topic_type, request_service, rate_service, default_rate, override_timestamps, latched):
         rospy.loginfo("Starting RequestLinkEndPoint...")
         [self.topic_type, self.topic_package] = self.extract_type_and_package(topic_type)
         self.dynamic_load(self.topic_package)
         self.real_topic_type = eval(self.topic_type)
-        self.default_rate = rospy.Rate(default_rate)
+        self.forward_rate = default_rate
+        if (not math.isnan(self.forward_rate) and self.forward_rate != float('inf')):
+            self.default_rate = rospy.Rate(self.forward_rate)
+        else:
+            self.default_rate = rospy.Rate(20.0)
         self.latched = latched
         self.active = False
-        self.output_topic_name = output_topic_name
-        self.request_service = request_service
-        self.client = rospy.ServiceProxy(self.request_service, RequestMessage)
+        self.client = rospy.ServiceProxy(request_service, RequestMessage)
         self.subscriber_handler = SubscribeHandler(self.sub_connect, self.sub_disconnect)
-        self.publisher = rospy.Publisher(self.output_topic_name, eval(self.topic_type), self.subscriber_handler, latch=self.latched)
+        self.publisher = rospy.Publisher(output_topic_name, self.real_topic_type, self.subscriber_handler, latch=self.latched)
         rospy.loginfo("...RequestLinkEndPoint loaded")
         while not rospy.is_shutdown():
             if (self.active):
                 try:
-                    response = self.client.call()
-                    if (response.available):
-                        new_msg = self.real_topic_type()
-                        new_msg.deserialize(response.message_data)
-                        self.publisher.publish(new_msg)
-                    else:
-                        rospy.logwarn("Requested message, but none available")
+                    self.get_data()
                 except:
-                    rospy.logerr("Request failed, trying to rebuild connection...")
-                    rospy.sleep(rebuild_delay)
-                    self.client = rospy.ServiceProxy(self.request_service, RequestMessage)
-            self.default_rate.sleep()
+                    rospy.logerr("Data request failed")
+                if (self.forward_rate != float('inf')):
+                    self.default_rate.sleep()
+
+    def get_data(self):
+        response = self.client.call()
+        if (response.available):
+            new_msg = self.real_topic_type()
+            new_msg.deserialize(response.message_data)
+            self.publisher.publish(new_msg)
+        else:
+            rospy.logwarn("Requested message, but none available")
 
     def sub_connect(self, num_subscribers):
         if (num_subscribers > 1):
@@ -69,6 +74,25 @@ class RequestLinkEndPoint:
         if (num_subscribers < 1):
             self.active = False
             rospy.loginfo("Last subscriber disconnected, setting to INACTIVE")
+
+    def rate_cb(self, request):
+        if (request.rate == float('inf')):
+            self.active = True
+            self.foward_rate = float('inf')
+        elif (request.Rate == 0.0 or request.rate == -0.0):
+            self.active = False
+            self.forward_rate = 0.0
+        elif (request.Rate == -1.0):
+            self.get_data()
+        elif (not math.isnan(request.Rate) and request.Rate > 0.0):
+            self.active = True
+            self.forward_rate = request.Rate
+            self.default_rate = rospy.Rate(self.forward_rate)
+        else:
+            rospy.logerr("Attempted to set invalid republishing rate")
+        response = RateControlResponse()
+        response.State = self.forward_rate
+        return response
 
     def extract_type_and_package(self, input_topic_type):
         topic_package = input_topic_type.split("/")[0]
@@ -85,7 +109,8 @@ if __name__ == '__main__':
     output_topic_name = rospy.get_param("~output_topic_name", "relay/test")
     topic_type = rospy.get_param("~topic_type", "std_msgs/String")
     request_service = rospy.get_param("~request_service", "test/req")
-    default_rate = rospy.get_param("~default_rate", 20.0)
-    rebuild_delay = rospy.get_param("~rebuild_delay", 5.0)
+    rate_service = rospy.get_param("~rate_ctrl", "test/rate")
+    default_rate = rospy.get_param("~default_rate", float('inf'))
+    override_timestamps = rospy.get_param("~override_timestamps", False)
     latched = rospy.get_param("~latched", False)
-    RequestLinkEndPoint(output_topic_name, topic_type, request_service, default_rate, rebuild_delay, latched)
+    RequestLinkEndPoint(output_topic_name, topic_type, request_service, rate_service, default_rate, override_timestamps, latched)
