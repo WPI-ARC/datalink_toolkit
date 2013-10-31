@@ -67,6 +67,11 @@ target_link_libraries(pointcloud_compression ${catkin_LIBRARIES} z)
 
 ## Declare cpp executables
 
+# Camera manager node
+add_executable(camera_manager src/camera_manager.cpp)
+add_dependencies(camera_manager ${catkin_EXPORTED_TARGETS})
+target_link_libraries(camera_manager ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
 # Image resizing node
 add_executable(image_resizer src/image_resizer.cpp)
 add_dependencies(image_resizer ${catkin_EXPORTED_TARGETS})
