@@ -540,9 +540,22 @@ teleop_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msg
             // If we have more points than we have stored, there's no reason to check
             else
             {
+                if (skip_counter != 0)
+                {
+                    uint32_t skip_block = skip_counter | 0xc0000000;
+                    delta_data.push_back(skip_block);
+                    skip_counter = 0;
+                }
                 delta_data.push_back(tenbit_positions[tenbitidx]);
             }
             tenbitidx++;
+        }
+        // Make sure the skip counter is added if necessary
+        if (skip_counter != 0)
+        {
+            uint32_t skip_block = skip_counter | 0xc0000000;
+            delta_data.push_back(skip_block);
+            skip_counter = 0;
         }
         // Convert to binary data
         std::vector<uint8_t> raw_data;

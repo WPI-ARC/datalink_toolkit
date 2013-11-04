@@ -98,7 +98,7 @@ public:
                 float secs = (float)(et.tv_sec - st.tv_sec);
                 secs = secs + (float)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
                 float ratio = ((float)cloud.data.size() / (float)res.cloud.compressed_data.size()) * 100.0;
-                ROS_DEBUG("Decompression of %f %% took %f seconds", ratio, secs);
+                ROS_INFO("Decompression of %f %% took %f seconds", ratio, secs);
                 if (override_timestamps_)
                 {
                     cloud.header.stamp = ros::Time::now();
