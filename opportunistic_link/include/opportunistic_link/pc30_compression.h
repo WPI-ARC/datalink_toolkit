@@ -24,7 +24,7 @@ namespace pc30_compression
     public:
 
         enum FRAME_TYPES {IFRAME, PFRAME, UNKNOWN};
-        static const uint32_t IFRAME_RATE = 2;
+        static const uint32_t IFRAME_RATE = 1;
         static const uint32_t IFRAME_ID = 0x00ffffff;
         static const uint32_t PFRAME_ID = 0x00dfdfdf;
         static const uint32_t UNKNOWN_ID = 0x00000000;
