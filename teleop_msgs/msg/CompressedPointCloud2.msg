@@ -5,6 +5,7 @@ sensor_msgs/PointField[] fields
 bool is_bigendian
 uint32 point_step
 uint32 row_step
+uint8 PC30=16
 uint8 PCL=2
 uint8 ZLIB=1
 uint8 NONE=0

@@ -60,12 +60,22 @@ add_library(image_compression SHARED src/image_compression.cpp)
 add_dependencies(image_compression ${catkin_EXPORTED_TARGETS})
 target_link_libraries(image_compression ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} z)
 
+# PC30 pointcloud compression library
+add_library(pc30_compression SHARED src/pc30_compression.cpp)
+add_dependencies(pc30_compression ${catkin_EXPORTED_TARGETS})
+target_link_libraries(pc30_compression ${catkin_LIBRARIES} z)
+
 # Pointcloud compression library
 add_library(pointcloud_compression SHARED src/pointcloud_compression.cpp)
 add_dependencies(pointcloud_compression ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pointcloud_compression ${catkin_LIBRARIES} z)
+target_link_libraries(pointcloud_compression pc30_compression ${catkin_LIBRARIES} z)
 
 ## Declare cpp executables
+
+# Camera manager node
+add_executable(camera_manager src/camera_manager.cpp)
+add_dependencies(camera_manager ${catkin_EXPORTED_TARGETS})
+target_link_libraries(camera_manager ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 # Image resizing node
 add_executable(image_resizer src/image_resizer.cpp)

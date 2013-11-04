@@ -8,17 +8,119 @@
 #include <pcl/ros/conversions.h>
 #include <pcl/compression/octree_pointcloud_compression.h>
 #include <opportunistic_link/pointcloud_compression.h>
+#include <opportunistic_link/pc30_compression.h>
 
 using namespace pointcloud_compression;
 
 void PointCloudHandler::reset_encoder()
 {
-    encoder_.initialization();
+    pcl_encoder_.initialization();
+    pc30_encoder_.reset_encoder();
 }
 
 void PointCloudHandler::reset_decoder()
 {
-    decoder_.initialization();
+    pcl_decoder_.initialization();
+    pc30_decoder_.reset_decoder();
+}
+
+std::vector<uint8_t> PointCloudHandler::decompress_bytes(std::vector<uint8_t>& compressed)
+{
+    z_stream strm;
+    std::vector<uint8_t> buffer;
+    const size_t BUFSIZE = 1024 * 1024;
+    uint8_t temp_buffer[BUFSIZE];
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    int ret = inflateInit(&strm);
+    if (ret != Z_OK)
+    {
+        (void)inflateEnd(&strm);
+        ROS_ERROR("ZLIB unable to init inflate stream");
+        throw std::invalid_argument("ZLIB unable to init inflate stream");
+    }
+    strm.avail_in = compressed.size();
+    strm.next_in = reinterpret_cast<uint8_t *>(compressed.data());
+    do
+    {
+        strm.next_out = temp_buffer;
+        strm.avail_out = BUFSIZE;
+        ret = inflate(&strm, Z_NO_FLUSH);
+        if (buffer.size() < strm.total_out)
+        {
+            buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE - strm.avail_out);
+        }
+    }
+    while (ret == Z_OK);
+    if (ret != Z_STREAM_END)
+    {
+        (void)inflateEnd(&strm);
+        ROS_ERROR("ZLIB unable to inflate stream with ret=%d", ret);
+        throw std::invalid_argument("ZLIB unable to inflate stream");
+    }
+    (void)inflateEnd(&strm);
+    std::vector<uint8_t> decompressed(buffer);
+    return decompressed;
+}
+
+std::vector<uint8_t> PointCloudHandler::compress_bytes(std::vector<uint8_t>& uncompressed)
+{
+    z_stream strm;
+    std::vector<uint8_t> buffer;
+    const size_t BUFSIZE = 1024 * 1024;
+    uint8_t temp_buffer[BUFSIZE];
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    strm.avail_in = uncompressed.size();
+    strm.next_in = reinterpret_cast<uint8_t *>(uncompressed.data());
+    strm.next_out = temp_buffer;
+    strm.avail_out = BUFSIZE;
+    int ret = deflateInit(&strm, Z_BEST_SPEED);
+    if (ret != Z_OK)
+    {
+        (void)deflateEnd(&strm);
+        ROS_ERROR("ZLIB unable to init deflate stream");
+        throw std::invalid_argument("ZLIB unable to init deflate stream");
+    }
+    while (strm.avail_in != 0)
+    {
+        ret = deflate(&strm, Z_NO_FLUSH);
+        if (ret != Z_OK)
+        {
+            (void)deflateEnd(&strm);
+            ROS_ERROR("ZLIB unable to deflate stream");
+            throw std::invalid_argument("ZLIB unable to deflate stream");
+        }
+        if (strm.avail_out == 0)
+        {
+            buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE);
+            strm.next_out = temp_buffer;
+            strm.avail_out = BUFSIZE;
+        }
+    }
+    int deflate_ret = Z_OK;
+    while (deflate_ret == Z_OK)
+    {
+        if (strm.avail_out == 0)
+        {
+            buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE);
+            strm.next_out = temp_buffer;
+            strm.avail_out = BUFSIZE;
+        }
+        deflate_ret = deflate(&strm, Z_FINISH);
+    }
+    if (deflate_ret != Z_STREAM_END)
+    {
+        (void)deflateEnd(&strm);
+        ROS_ERROR("ZLIB unable to deflate stream");
+        throw std::invalid_argument("ZLIB unable to deflate stream");
+    }
+    buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE - strm.avail_out);
+    (void)deflateEnd(&strm);
+    std::vector<uint8_t> compressed(buffer);
+    return compressed;
 }
 
 sensor_msgs::PointCloud2 PointCloudHandler::decompress_pointcloud2(teleop_msgs::CompressedPointCloud2& compressed)
@@ -36,41 +138,7 @@ sensor_msgs::PointCloud2 PointCloudHandler::decompress_pointcloud2(teleop_msgs::
     if (compressed.compression_type == teleop_msgs::CompressedPointCloud2::ZLIB)
     {
         // Decompress the pointcloud data using ZLIB's DEFLATE compression
-        z_stream strm;
-        std::vector<uint8_t> buffer;
-        const size_t BUFSIZE = 1024 * 1024;
-        uint8_t temp_buffer[BUFSIZE];
-        strm.zalloc = Z_NULL;
-        strm.zfree = Z_NULL;
-        strm.opaque = Z_NULL;
-        int ret = inflateInit(&strm);
-        if (ret != Z_OK)
-        {
-            (void)inflateEnd(&strm);
-            ROS_ERROR("ZLIB unable to init inflate stream");
-            throw std::invalid_argument("ZLIB unable to init inflate stream");
-        }
-        strm.avail_in = compressed.compressed_data.size();
-        strm.next_in = reinterpret_cast<uint8_t *>(compressed.compressed_data.data());
-        do
-        {
-            strm.next_out = temp_buffer;
-            strm.avail_out = BUFSIZE;
-            ret = inflate(&strm, Z_NO_FLUSH);
-            if (buffer.size() < strm.total_out)
-            {
-                buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE - strm.avail_out);
-            }
-        }
-        while (ret == Z_OK);
-        if (ret != Z_STREAM_END)
-        {
-            (void)inflateEnd(&strm);
-            ROS_ERROR("ZLIB unable to inflate stream with ret=%d", ret);
-            throw std::invalid_argument("ZLIB unable to inflate stream");
-        }
-        (void)inflateEnd(&strm);
-        cloud.data.swap(buffer);
+        cloud.data = decompress_bytes(compressed.compressed_data);
     }
     else if (compressed.compression_type == teleop_msgs::CompressedPointCloud2::PCL)
     {
@@ -85,7 +153,7 @@ sensor_msgs::PointCloud2 PointCloudHandler::decompress_pointcloud2(teleop_msgs::
             compressed_data.insert(compressed_data.end(), compressed.compressed_data.begin(), compressed.compressed_data.end());
             std::stringstream compressed_data_stream;
             compressed_data_stream.str(compressed_data);
-            decoder_.decodePointCloud(compressed_data_stream, uncompressed_cloud_ptr_);
+            pcl_decoder_.decodePointCloud(compressed_data_stream, uncompressed_cloud_ptr_);
             sensor_msgs::PointCloud2 new_cloud;
             pcl::toROSMsg(*uncompressed_cloud_ptr_, new_cloud);
             cloud.data = new_cloud.data;
@@ -97,6 +165,10 @@ sensor_msgs::PointCloud2 PointCloudHandler::decompress_pointcloud2(teleop_msgs::
             cloud.point_step = new_cloud.point_step;
             cloud.row_step = new_cloud.row_step;
         }
+    }
+    else if (compressed.compression_type == teleop_msgs::CompressedPointCloud2::PC30)
+    {
+        cloud = pc30_decoder_.decode_pointcloud2(compressed);
     }
     else if (compressed.compression_type == teleop_msgs::CompressedPointCloud2::NONE)
     {
@@ -144,60 +216,7 @@ teleop_msgs::CompressedPointCloud2 PointCloudHandler::compress_pointcloud2(senso
     {
         // Compress the pointcloud data using ZLIB's DEFLATE compression
         compressed_cloud.compression_type = teleop_msgs::CompressedPointCloud2::ZLIB;
-        z_stream strm;
-        std::vector<uint8_t> buffer;
-        const size_t BUFSIZE = 1024 * 1024;
-        uint8_t temp_buffer[BUFSIZE];
-        strm.zalloc = Z_NULL;
-        strm.zfree = Z_NULL;
-        strm.opaque = Z_NULL;
-        strm.avail_in = cloud.data.size();
-        strm.next_in = reinterpret_cast<uint8_t *>(cloud.data.data());
-        strm.next_out = temp_buffer;
-        strm.avail_out = BUFSIZE;
-        int ret = deflateInit(&strm, Z_BEST_SPEED);
-        if (ret != Z_OK)
-        {
-            (void)deflateEnd(&strm);
-            ROS_ERROR("ZLIB unable to init deflate stream");
-            throw std::invalid_argument("ZLIB unable to init deflate stream");
-        }
-        while (strm.avail_in != 0)
-        {
-            ret = deflate(&strm, Z_NO_FLUSH);
-            if (ret != Z_OK)
-            {
-                (void)deflateEnd(&strm);
-                ROS_ERROR("ZLIB unable to deflate stream");
-                throw std::invalid_argument("ZLIB unable to deflate stream");
-            }
-            if (strm.avail_out == 0)
-            {
-                buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE);
-                strm.next_out = temp_buffer;
-                strm.avail_out = BUFSIZE;
-            }
-        }
-        int deflate_ret = Z_OK;
-        while (deflate_ret == Z_OK)
-        {
-            if (strm.avail_out == 0)
-            {
-                buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE);
-                strm.next_out = temp_buffer;
-                strm.avail_out = BUFSIZE;
-            }
-            deflate_ret = deflate(&strm, Z_FINISH);
-        }
-        if (deflate_ret != Z_STREAM_END)
-        {
-            (void)deflateEnd(&strm);
-            ROS_ERROR("ZLIB unable to deflate stream");
-            throw std::invalid_argument("ZLIB unable to deflate stream");
-        }
-        buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE - strm.avail_out);
-        (void)deflateEnd(&strm);
-        compressed_cloud.compressed_data.swap(buffer);
+        compressed_cloud.compressed_data = compress_bytes(cloud.data);
     }
     else if (compression_type == teleop_msgs::CompressedPointCloud2::PCL)
     {
@@ -206,10 +225,14 @@ teleop_msgs::CompressedPointCloud2 PointCloudHandler::compress_pointcloud2(senso
         pcl::fromROSMsg(cloud, converted_cloud);
         pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloudptr(&converted_cloud, dealocate_pcl_pointcloud_fn);
         std::stringstream compressed_data_stream;
-        encoder_.encodePointCloud(cloudptr, compressed_data_stream);
+        pcl_encoder_.encodePointCloud(cloudptr, compressed_data_stream);
         std::string compressed_data = compressed_data_stream.str();
         std::vector<uint8_t> buffer(compressed_data.begin(), compressed_data.end());
         compressed_cloud.compressed_data = buffer;
+    }
+    else if (compression_type == teleop_msgs::CompressedPointCloud2::PC30)
+    {
+        compressed_cloud = pc30_encoder_.encode_pointcloud2(cloud);
     }
     else
     {

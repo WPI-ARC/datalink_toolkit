@@ -7,6 +7,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/ros/conversions.h>
 #include <pcl/compression/octree_pointcloud_compression.h>
+#include <opportunistic_link/pc30_compression.h>
 
 #ifndef POINTCLOUD_COMPRESSION_H
 #define POINTCLOUD_COMPRESSION_H
@@ -26,9 +27,11 @@ namespace pointcloud_compression
     protected:
 
         pcl::VoxelGrid<sensor_msgs::PointCloud2> voxel_filter_;
-        pcl::octree::PointCloudCompression<pcl::PointXYZRGB> encoder_;
-        pcl::octree::PointCloudCompression<pcl::PointXYZRGB> decoder_;
+        pcl::octree::PointCloudCompression<pcl::PointXYZRGB> pcl_encoder_;
+        pcl::octree::PointCloudCompression<pcl::PointXYZRGB> pcl_decoder_;
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr uncompressed_cloud_ptr_;
+        pc30_compression::PC30Compressor pc30_encoder_;
+        pc30_compression::PC30Compressor pc30_decoder_;
 
     public:
 
@@ -44,6 +47,10 @@ namespace pointcloud_compression
         void reset_encoder();
 
         void reset_decoder();
+
+        std::vector<uint8_t> decompress_bytes(std::vector<uint8_t>& compressed);
+
+        std::vector<uint8_t> compress_bytes(std::vector<uint8_t>& uncompressed);
 
         sensor_msgs::PointCloud2 decompress_pointcloud2(teleop_msgs::CompressedPointCloud2& compressed);
 

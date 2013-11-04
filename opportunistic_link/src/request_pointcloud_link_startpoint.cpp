@@ -32,6 +32,11 @@ public:
             compression_type_ = teleop_msgs::CompressedPointCloud2::PCL;
             ROS_INFO("Relay using PCL compression");
         }
+        else if (compression_type == teleop_msgs::CompressedPointCloud2::PC30)
+        {
+            compression_type_ = teleop_msgs::CompressedPointCloud2::PC30;
+            ROS_INFO("Relay using PC30 compression");
+        }
         else
         {
             compression_type_ = teleop_msgs::CompressedPointCloud2::NONE;
@@ -110,6 +115,10 @@ int main(int argc, char** argv)
     else if (compression_type.compare("PCL") == 0)
     {
         compression_id = teleop_msgs::CompressedPointCloud2::PCL;
+    }
+    else if (compression_type.compare("PC30") == 0)
+    {
+        compression_id = teleop_msgs::CompressedPointCloud2::PC30;
     }
     else
     {
