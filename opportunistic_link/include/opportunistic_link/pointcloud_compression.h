@@ -27,8 +27,13 @@ namespace pointcloud_compression
     protected:
 
         pcl::VoxelGrid<sensor_msgs::PointCloud2> voxel_filter_;
+#if (PCL_MAJOR_VERSION > 1 || PCL_MINOR_VERSION > 6)
+        pcl::io::OctreePointCloudCompression<pcl::PointXYZRGB> pcl_encoder_;
+        pcl::io::OctreePointCloudCompression<pcl::PointXYZRGB> pcl_decoder_;
+#else
         pcl::octree::PointCloudCompression<pcl::PointXYZRGB> pcl_encoder_;
         pcl::octree::PointCloudCompression<pcl::PointXYZRGB> pcl_decoder_;
+#endif
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr uncompressed_cloud_ptr_;
         pc30_compression::PC30Compressor pc30_encoder_;
         pc30_compression::PC30Compressor pc30_decoder_;
