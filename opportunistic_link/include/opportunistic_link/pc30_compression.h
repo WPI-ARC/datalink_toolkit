@@ -17,6 +17,7 @@ namespace pc30_compression
     protected:
 
         std::vector<uint32_t> state_packed_;
+        std::map<uint32_t, int8_t> stored_state_;
         uint32_t iframe_rate_;
         uint32_t pframe_counter_;
         pcl::PointCloud<pcl::PointXYZ> get_current_pointcloud();
@@ -24,7 +25,7 @@ namespace pc30_compression
     public:
 
         enum FRAME_TYPES {IFRAME, PFRAME, UNKNOWN};
-        static const uint32_t IFRAME_RATE = 1;
+        static const uint32_t IFRAME_RATE = 10;
         static const uint32_t IFRAME_ID = 0x00ffffff;
         static const uint32_t PFRAME_ID = 0x00dfdfdf;
         static const uint32_t UNKNOWN_ID = 0x00000000;

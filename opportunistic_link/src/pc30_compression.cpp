@@ -177,6 +177,8 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
         decoded.width = compressed.width;
         decoded.point_step = compressed.point_step;
         decoded.row_step = compressed.row_step;
+        // Flush the stored state, since we aren't tracking any points
+        state_packed_.clear();
         return decoded;
     }
     // Check if the encoded data is a valid length
@@ -200,6 +202,8 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
         // Check the header to tell if this is a full-update "I-Frame"
         if (frame_type == IFRAME)
         {
+            ROS_INFO("Start I-FRAME decode");
+            stored_state_.clear();
             // Extract uint32_t data
             std::vector<uint32_t> encoded_cloud_data;
             encoded_cloud_data.resize((decompressed_encoded_data.size() / 4) - 1);
@@ -214,6 +218,7 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
                 extracted_point = extracted_point << 8;
                 extracted_point = extracted_point | decompressed_encoded_data[didx + 0];
                 encoded_cloud_data[eidx] = extracted_point;
+                stored_state_[extracted_point] = 1;
             }
             // Swap the new full frame into the stored cloud data
             state_packed_.swap(encoded_cloud_data);
@@ -225,17 +230,13 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
             // Fill in the header information
             decoded.header.stamp = compressed.header.stamp;
             decoded.header.frame_id = compressed.header.frame_id;
-            decoded.is_dense = compressed.is_dense;
-            decoded.is_bigendian = compressed.is_bigendian;
-            decoded.height = compressed.height;
-            decoded.width = compressed.width;
-            decoded.point_step = compressed.point_step;
-            decoded.row_step = compressed.row_step;
+            ROS_INFO("End I-FRAME decode");
             return decoded;
         }
         // Check the header to tell if this is a partial update "P-Frame"
         else if (frame_type == PFRAME)
         {
+            ROS_INFO("Start P-FRAME decode");
             // P-Frames have a bigger header - first, check size
             if (decompressed_encoded_data.size() < 8)
             {
@@ -256,6 +257,9 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
                 decoded.width = compressed.width;
                 decoded.point_step = compressed.point_step;
                 decoded.row_step = compressed.row_step;
+                // Flush the stored state, since we aren't tracking any points
+                state_packed_.clear();
+                ROS_INFO("End P-FRAME decode");
                 return decoded;
             }
             else
@@ -270,17 +274,8 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
                 data_length = data_length | decompressed_encoded_data[5];
                 data_length = data_length << 8;
                 data_length = data_length | decompressed_encoded_data[4];
-                // Build the destination
-                std::vector<uint32_t> recovered_cloud_data;
-                recovered_cloud_data.resize(data_length);
-                // Initialize the counters
-                // Index into recovered_cloud_data
-                size_t ridx = 0;
-                // Index into decompressed_encoded_data
-                size_t didx = 8;
-                // Index into state_packed_
-                size_t eidx = 0;
-                while (ridx < recovered_cloud_data.size())
+                // Add and remove points from the stored state
+                for (size_t didx = 8; didx < decompressed_encoded_data.size(); didx+=4)
                 {
                     uint32_t extracted_point = 0;
                     extracted_point = extracted_point | decompressed_encoded_data[didx + 3];
@@ -291,27 +286,35 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
                     extracted_point = extracted_point << 8;
                     extracted_point = extracted_point | decompressed_encoded_data[didx + 0];
                     uint32_t control_flag = extracted_point & 0xc0000000;
-                    // If the control flag is empty, this is point data
-                    if (control_flag == 0)
+                    // If control flag is 0b10, we are adding a new point to the stored state
+                    if (control_flag == 0x80000000)
                     {
-                        recovered_cloud_data[ridx] = extracted_point;
-                        ridx++;
-                        didx+=4;
-                        eidx++;
+                        uint32_t real_point = extracted_point & 0x3fffffff;
+                        stored_state_[real_point] = 1;
                     }
-                    // If the control flag is non-zero, this is a run-length-encoded 'skip'
+                    // If control flag is 0b01, we are removing the point from the stored state
+                    else if (control_flag == 0x40000000)
+                    {
+                        uint32_t real_point = extracted_point & 0x3fffffff;
+                        stored_state_.erase(real_point);
+                    }
                     else
                     {
-                        uint32_t skip_distance = extracted_point & 0x3fffffff;
-                        uint32_t start_skip = eidx;
-                        uint32_t end_skip = eidx + skip_distance;
-                        for (size_t sidx = start_skip; sidx < end_skip; sidx++)
-                        {
-                            recovered_cloud_data[ridx] = state_packed_[eidx];
-                            eidx++;
-                            ridx++;
-                        }
-                        didx+=4;
+                        ROS_WARN("Invalid control flag on P-FRAME delta-encoded point: 0x%x ", control_flag);
+                    }
+                }
+                // Build the final destination
+                std::vector<uint32_t> recovered_cloud_data;
+                std::map<uint32_t, int8_t>::iterator itr;
+                // Loop through the stored state to generate the vector of points
+                for (itr = stored_state_.begin(); itr != stored_state_.end(); ++itr)
+                {
+                    uint32_t point = itr->first;
+                    int8_t ctrl = itr->second;
+                    // Make sure this is a valid entry
+                    if (ctrl > 0)
+                    {
+                        recovered_cloud_data.push_back(point);
                     }
                 }
                 // Now that the PFRAME has been rebuilt with the stored state
@@ -324,12 +327,7 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
                 // Fill in the header information
                 decoded.header.stamp = compressed.header.stamp;
                 decoded.header.frame_id = compressed.header.frame_id;
-                decoded.is_dense = compressed.is_dense;
-                decoded.is_bigendian = compressed.is_bigendian;
-                decoded.height = compressed.height;
-                decoded.width = compressed.width;
-                decoded.point_step = compressed.point_step;
-                decoded.row_step = compressed.row_step;
+                ROS_INFO("End P-FRAME decode");
                 return decoded;
             }
         }
@@ -376,6 +374,7 @@ teleop_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msg
     pcl::PointCloud<pcl::PointXYZ> pcl_cloud;
     pcl::fromROSMsg(cloud, pcl_cloud);
     std::vector<uint32_t> tenbit_positions;
+    std::map<uint32_t, int8_t> new_state;
     for (size_t idx = 0; idx < pcl_cloud.size(); idx++)
     {
         pcl::PointXYZ& current_point = pcl_cloud.at(idx);
@@ -416,6 +415,7 @@ teleop_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msg
             tenbit_point = tenbit_point << 10;
             tenbit_point = tenbit_point | z_cm;
             tenbit_positions.push_back(tenbit_point);
+            new_state[tenbit_point] = 1;
         }
     }
     // Then, depending on pframe_counter_, we return the complete I-Frame
@@ -461,6 +461,7 @@ teleop_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msg
         pframe_counter_++;
         // Store the current cloud into the encoder state
         state_packed_.swap(tenbit_positions);
+        stored_state_.swap(new_state);
         return compressed_cloud;
     }
     // If we want to return a P-Frame but we have no data to use, send an IFRAME
@@ -507,61 +508,58 @@ teleop_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msg
         pframe_counter_++;
         // Store the current cloud into the encoder state
         state_packed_.swap(tenbit_positions);
+        stored_state_.swap(new_state);
         return compressed_cloud;
     }
     // If not, we return a partial P-Frame
     else
     {
-        // Compute the delta between the current state and the stored encoder state
+        // Compute the delta between new map and stored map
+        std::map<uint32_t, int8_t> safe_state;
         std::vector<uint32_t> delta_data;
-        size_t current_data_length = state_packed_.size();
-        size_t tenbitidx = 0;
-        uint32_t skip_counter = 0;
-        while (tenbitidx < tenbit_positions.size())
+        std::map<uint32_t, int8_t>::iterator itr;
+        // Loop through the new state to find the *new points* in the latest pointcloud
+        for (itr = new_state.begin(); itr != new_state.end(); ++itr)
         {
-            if (tenbitidx < current_data_length)
+            int32_t point = itr->first;
+            int8_t ctrl = itr->second;
+            // First, add to the "safe state" that only contains valid points to store
+            if (ctrl > 0)
             {
-                // If current and stored data are the same, we store the skips
-                if (tenbit_positions[tenbitidx] == state_packed_[tenbitidx])
-                {
-                    skip_counter++;
-                }
-                else
-                {
-                    if (skip_counter != 0)
-                    {
-                        uint32_t skip_block = skip_counter | 0xc0000000;
-                        delta_data.push_back(skip_block);
-                    }
-                    delta_data.push_back(tenbit_positions[tenbitidx]);
-                    skip_counter = 0;
-                }
+                safe_state[point] = 1;
             }
-            // If we have more points than we have stored, there's no reason to check
-            else
+            // Second, check if the point is already stored
+            int8_t stored_ctrl = stored_state_[point];
+            // If the stored ctrl is greater than zero, it's being stored
+            // If it's zero (the default value), then the point is new
+            if (ctrl > 0 && stored_ctrl == 0)
             {
-                if (skip_counter != 0)
-                {
-                    uint32_t skip_block = skip_counter | 0xc0000000;
-                    delta_data.push_back(skip_block);
-                    skip_counter = 0;
-                }
-                delta_data.push_back(tenbit_positions[tenbitidx]);
+                // Add the new point to the delta as an "ADD" with 0b10 as the header
+                uint32_t delta_point = point | 0x80000000;
+                delta_data.push_back(delta_point);
             }
-            tenbitidx++;
         }
-        // Make sure the skip counter is added if necessary
-        if (skip_counter != 0)
+        // Loop through the old cloud to find the *old points* NOT in the latest pointcloud
+        for (itr = stored_state_.begin(); itr != stored_state_.end(); ++itr)
         {
-            uint32_t skip_block = skip_counter | 0xc0000000;
-            delta_data.push_back(skip_block);
-            skip_counter = 0;
+            uint32_t point = itr->first;
+            uint8_t ctrl = itr->second;
+            // Check if the old point is also in the new pointcloud
+            int8_t new_ctrl = new_state[point];
+            // If the new ctrl is greater than zero, it's being stored
+            // If it's zero (the default value), then the point is no longer there
+            if (ctrl > 0 && new_ctrl == 0)
+            {
+                // Add the new point to the delta as a "REMOVE" with 0b01 as the header
+                uint32_t delta_point = point | 0x40000000;
+                delta_data.push_back(delta_point);
+            }
         }
         // Convert to binary data
         std::vector<uint8_t> raw_data;
         raw_data.resize(4 * delta_data.size() + 8);
         // Set the first 4 bytes to store frame type
-        uint32_t frame_type_header = frame_type_to_header(IFRAME);
+        uint32_t frame_type_header = frame_type_to_header(PFRAME);
         raw_data[0] = frame_type_header & 0x000000ff;
         frame_type_header = frame_type_header >> 8;
         raw_data[1] = frame_type_header & 0x000000ff;
@@ -606,6 +604,7 @@ teleop_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msg
         pframe_counter_++;
         // Store the current cloud into the encoder state
         state_packed_.swap(tenbit_positions);
+        stored_state_.swap(safe_state);
         return compressed_cloud;
     }
 }
