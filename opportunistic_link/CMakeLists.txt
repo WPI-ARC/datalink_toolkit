@@ -65,10 +65,15 @@ add_library(pc30_compression SHARED src/pc30_compression.cpp)
 add_dependencies(pc30_compression ${catkin_EXPORTED_TARGETS})
 target_link_libraries(pc30_compression ${catkin_LIBRARIES} z)
 
+# PC60 pointcloud compression library
+add_library(pc60_compression SHARED src/pc60_compression.cpp)
+add_dependencies(pc60_compression ${catkin_EXPORTED_TARGETS})
+target_link_libraries(pc60_compression ${catkin_LIBRARIES} z)
+
 # Pointcloud compression library
 add_library(pointcloud_compression SHARED src/pointcloud_compression.cpp)
 add_dependencies(pointcloud_compression ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pointcloud_compression pc30_compression ${catkin_LIBRARIES} z)
+target_link_libraries(pointcloud_compression pc30_compression pc60_compression ${catkin_LIBRARIES} z)
 
 ## Declare cpp executables
 

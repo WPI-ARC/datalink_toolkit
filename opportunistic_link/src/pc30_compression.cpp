@@ -521,7 +521,7 @@ teleop_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msg
         // Loop through the new state to find the *new points* in the latest pointcloud
         for (itr = new_state.begin(); itr != new_state.end(); ++itr)
         {
-            int32_t point = itr->first;
+            u_int32_t point = itr->first;
             int8_t ctrl = itr->second;
             // First, add to the "safe state" that only contains valid points to store
             if (ctrl > 0)

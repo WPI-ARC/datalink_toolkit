@@ -9,6 +9,7 @@
 #include <pcl/compression/octree_pointcloud_compression.h>
 #include <opportunistic_link/pointcloud_compression.h>
 #include <opportunistic_link/pc30_compression.h>
+#include <opportunistic_link/pc60_compression.h>
 
 using namespace pointcloud_compression;
 
@@ -16,12 +17,14 @@ void PointCloudHandler::reset_encoder()
 {
     pcl_encoder_.initialization();
     pc30_encoder_.reset_encoder();
+    pc60_encoder_.reset_encoder();
 }
 
 void PointCloudHandler::reset_decoder()
 {
     pcl_decoder_.initialization();
     pc30_decoder_.reset_decoder();
+    pc60_decoder_.reset_decoder();
 }
 
 std::vector<uint8_t> PointCloudHandler::decompress_bytes(std::vector<uint8_t>& compressed)
@@ -170,6 +173,10 @@ sensor_msgs::PointCloud2 PointCloudHandler::decompress_pointcloud2(teleop_msgs::
     {
         cloud = pc30_decoder_.decode_pointcloud2(compressed);
     }
+    else if (compressed.compression_type == teleop_msgs::CompressedPointCloud2::PC60)
+    {
+        cloud = pc60_decoder_.decode_pointcloud2(compressed);
+    }
     else if (compressed.compression_type == teleop_msgs::CompressedPointCloud2::NONE)
     {
         cloud.data = compressed.compressed_data;
@@ -233,6 +240,10 @@ teleop_msgs::CompressedPointCloud2 PointCloudHandler::compress_pointcloud2(senso
     else if (compression_type == teleop_msgs::CompressedPointCloud2::PC30)
     {
         compressed_cloud = pc30_encoder_.encode_pointcloud2(cloud);
+    }
+    else if (compression_type == teleop_msgs::CompressedPointCloud2::PC60)
+    {
+        compressed_cloud = pc60_encoder_.encode_pointcloud2(cloud);
     }
     else
     {

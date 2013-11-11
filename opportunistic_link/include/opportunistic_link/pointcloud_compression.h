@@ -8,6 +8,7 @@
 #include <pcl/ros/conversions.h>
 #include <pcl/compression/octree_pointcloud_compression.h>
 #include <opportunistic_link/pc30_compression.h>
+#include <opportunistic_link/pc60_compression.h>
 
 #ifndef POINTCLOUD_COMPRESSION_H
 #define POINTCLOUD_COMPRESSION_H
@@ -37,6 +38,8 @@ namespace pointcloud_compression
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr uncompressed_cloud_ptr_;
         pc30_compression::PC30Compressor pc30_encoder_;
         pc30_compression::PC30Compressor pc30_decoder_;
+        pc60_compression::PC60Compressor pc60_encoder_;
+        pc60_compression::PC60Compressor pc60_decoder_;
 
     public:
 
