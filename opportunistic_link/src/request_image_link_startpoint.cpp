@@ -85,7 +85,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nhp("~");
     std::string image_topic;
     std::string data_service;
-    nhp.param(std::string("image_topic"), image_topic, std::string("camera/rgb/image"));
+    nhp.param(std::string("camera_topic"), image_topic, std::string("camera/rgb/image"));
     nhp.param(std::string("data_service"), data_service, std::string("camera/rgb/data"));
     RequestImageLinkStartpoint startpoint(nh, image_topic, data_service);
     ROS_INFO("...startup complete");
