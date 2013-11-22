@@ -29,6 +29,8 @@ public:
         camera_sub_ = it_.subscribeCamera(camera_base_topic, 1, &CameraResizer::camera_cb, this);
         camera_pub_ = it_.advertiseCamera(resized_base_topic, 1, true);
         std::string transport_in = camera_sub_.getTransport();
+        ROS_INFO("Actual image data topic: %s", camera_sub_.getTopic().c_str());
+        ROS_INFO("Actual camera_info topic: %s", camera_sub_.getTopic().c_str());
         ROS_INFO("Subscribed using %s for transport", transport_in.c_str());
     }
 
