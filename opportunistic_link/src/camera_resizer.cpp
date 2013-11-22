@@ -48,7 +48,6 @@ public:
 
     void camera_cb(const sensor_msgs::ImageConstPtr& image, const sensor_msgs::CameraInfoConstPtr& info)
     {
-        ROS_INFO("Got an image - WOO");
         // Convert to OpenCV
         cv_bridge::CvImagePtr cv_ptr;
         try
