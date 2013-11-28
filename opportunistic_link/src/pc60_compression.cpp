@@ -545,8 +545,8 @@ teleop_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(sensor_msg
         compressed_cloud.row_step = cloud.row_step;
         compressed_cloud.compression_type = teleop_msgs::CompressedPointCloud2::PC60;
         compressed_cloud.compressed_data = compress_bytes(raw_data);
-        // Increment PFRAME counter
-        pframe_counter_++;
+        // Reset PFRAME counter
+        pframe_counter_ = 0;
         // Store the current cloud into the encoder state
         state_packed_.swap(twentybit_positions);
         stored_state_.swap(new_state);
@@ -645,8 +645,8 @@ teleop_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(sensor_msg
             compressed_cloud.row_step = cloud.row_step;
             compressed_cloud.compression_type = teleop_msgs::CompressedPointCloud2::PC60;
             compressed_cloud.compressed_data = compress_bytes(raw_data);
-            // Increment PFRAME counter
-            pframe_counter_++;
+            // Reset PFRAME counter
+            pframe_counter_ = 0;
             // Store the current cloud into the encoder state
             state_packed_.swap(twentybit_positions);
             stored_state_.swap(safe_state);
