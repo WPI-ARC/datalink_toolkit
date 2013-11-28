@@ -167,16 +167,13 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
     else if (decompressed_encoded_data.size() == 4)
     {
         ROS_WARN("Compressed data contains an empty pointcloud");
+        pcl::PointCloud<pcl::PointXYZ> empty_cloud = generate_empty_pointcloud();
+        // Convert to ROS pointcloud
         sensor_msgs::PointCloud2 decoded;
+        pcl::toROSMsg(empty_cloud, decoded);
+        // Fill in the header information
         decoded.header.stamp = compressed.header.stamp;
         decoded.header.frame_id = compressed.header.frame_id;
-        decoded.is_dense = compressed.is_dense;
-        decoded.is_bigendian = compressed.is_bigendian;
-        decoded.fields = compressed.fields;
-        decoded.height = compressed.height;
-        decoded.width = compressed.width;
-        decoded.point_step = compressed.point_step;
-        decoded.row_step = compressed.row_step;
         // Flush the stored state, since we aren't tracking any points
         state_packed_.clear();
         stored_state_.clear();
@@ -340,6 +337,14 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
             throw std::invalid_argument("Compressed data does not contain a valid PC30 frame type");
         }
     }
+}
+
+pcl::PointCloud<pcl::PointXYZ> PC30Compressor::generate_empty_pointcloud()
+{
+    pcl::PointCloud<pcl::PointXYZ> empty_pointcloud;
+    pcl::PointXYZ dummy_point(0.0, 0.0, 0.0);
+    empty_pointcloud.push_back(dummy_point);
+    return empty_pointcloud;
 }
 
 pcl::PointCloud<pcl::PointXYZ> PC30Compressor::get_current_pointcloud()
@@ -603,11 +608,6 @@ teleop_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msg
             // Store the current cloud into the encoder state
             state_packed_.swap(tenbit_positions);
             stored_state_.swap(safe_state);
-            if (safe_state.size() == tenbit_positions.size())
-            {
-                ROS_FATAL("INTERNAL ENCODER ERROR");
-                exit(-1);
-            }
             return compressed_cloud;
         }
         else

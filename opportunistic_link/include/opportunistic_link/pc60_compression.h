@@ -21,6 +21,7 @@ namespace pc60_compression
         uint32_t iframe_rate_;
         uint32_t pframe_counter_;
         pcl::PointCloud<pcl::PointXYZ> get_current_pointcloud();
+        pcl::PointCloud<pcl::PointXYZ> generate_empty_pointcloud();
 
     public:
 
