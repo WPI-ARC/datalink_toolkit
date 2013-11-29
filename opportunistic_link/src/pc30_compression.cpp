@@ -167,18 +167,16 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
     else if (decompressed_encoded_data.size() == 4)
     {
         ROS_WARN("Compressed data contains an empty pointcloud");
+        pcl::PointCloud<pcl::PointXYZ> empty_cloud = generate_empty_pointcloud();
+        // Convert to ROS pointcloud
         sensor_msgs::PointCloud2 decoded;
+        pcl::toROSMsg(empty_cloud, decoded);
+        // Fill in the header information
         decoded.header.stamp = compressed.header.stamp;
         decoded.header.frame_id = compressed.header.frame_id;
-        decoded.is_dense = compressed.is_dense;
-        decoded.is_bigendian = compressed.is_bigendian;
-        decoded.fields = compressed.fields;
-        decoded.height = compressed.height;
-        decoded.width = compressed.width;
-        decoded.point_step = compressed.point_step;
-        decoded.row_step = compressed.row_step;
         // Flush the stored state, since we aren't tracking any points
         state_packed_.clear();
+        stored_state_.clear();
         return decoded;
     }
     // Check if the encoded data is a valid length
@@ -341,6 +339,14 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
     }
 }
 
+pcl::PointCloud<pcl::PointXYZ> PC30Compressor::generate_empty_pointcloud()
+{
+    pcl::PointCloud<pcl::PointXYZ> empty_pointcloud;
+    pcl::PointXYZ dummy_point(0.0, 0.0, 0.0);
+    empty_pointcloud.push_back(dummy_point);
+    return empty_pointcloud;
+}
+
 pcl::PointCloud<pcl::PointXYZ> PC30Compressor::get_current_pointcloud()
 {
     pcl::PointCloud<pcl::PointXYZ> current_pointcloud;
@@ -421,6 +427,7 @@ teleop_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msg
     // Then, depending on pframe_counter_, we return the complete I-Frame
     if ((pframe_counter_ % iframe_rate_) == 0)
     {
+        ROS_INFO("Start IFRAME encode");
         // Convert to binary data
         std::vector<uint8_t> raw_data;
         raw_data.resize(4 * tenbit_positions.size() + 4);
@@ -504,8 +511,8 @@ teleop_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msg
         compressed_cloud.row_step = cloud.row_step;
         compressed_cloud.compression_type = teleop_msgs::CompressedPointCloud2::PC30;
         compressed_cloud.compressed_data = compress_bytes(raw_data);
-        // Increment PFRAME counter
-        pframe_counter_++;
+        // Reset PFRAME counter
+        pframe_counter_ = 1;
         // Store the current cloud into the encoder state
         state_packed_.swap(tenbit_positions);
         stored_state_.swap(new_state);
@@ -514,6 +521,7 @@ teleop_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msg
     // If not, we return a partial P-Frame
     else
     {
+        ROS_INFO("Start PFRAME encode");
         // Compute the delta between new map and stored map
         std::map<uint32_t, int8_t> safe_state;
         std::vector<uint32_t> delta_data;
@@ -555,56 +563,108 @@ teleop_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msg
                 delta_data.push_back(delta_point);
             }
         }
-        // Convert to binary data
-        std::vector<uint8_t> raw_data;
-        raw_data.resize(4 * delta_data.size() + 8);
-        // Set the first 4 bytes to store frame type
-        uint32_t frame_type_header = frame_type_to_header(PFRAME);
-        raw_data[0] = frame_type_header & 0x000000ff;
-        frame_type_header = frame_type_header >> 8;
-        raw_data[1] = frame_type_header & 0x000000ff;
-        frame_type_header = frame_type_header >> 8;
-        raw_data[2] = frame_type_header & 0x000000ff;
-        frame_type_header = frame_type_header >> 8;
-        raw_data[3] = frame_type_header & 0x000000ff;
-        // Set the next 4 bytes to store the decoded length
-        uint32_t decoded_data_length = (uint32_t)tenbit_positions.size();
-        raw_data[4] = decoded_data_length & 0x000000ff;
-        decoded_data_length = decoded_data_length >> 8;
-        raw_data[5] = decoded_data_length & 0x000000ff;
-        decoded_data_length = decoded_data_length >> 8;
-        raw_data[6] = decoded_data_length & 0x000000ff;
-        decoded_data_length = decoded_data_length >> 8;
-        raw_data[7] = decoded_data_length & 0x000000ff;
-        for (size_t tidx = 0, didx = 8; tidx < delta_data.size(); tidx++, didx+=4)
+        // Check if delta-encoded P-Frame would be larger than an I-Frame
+        if (delta_data.size() >= tenbit_positions.size())
         {
-            uint32_t current_point = delta_data[tidx];
-            raw_data[didx + 0] = current_point & 0x000000ff;
-            current_point = current_point >> 8;
-            raw_data[didx + 1] = current_point & 0x000000ff;
-            current_point = current_point >> 8;
-            raw_data[didx + 2] = current_point & 0x000000ff;
-            current_point = current_point >> 8;
-            raw_data[didx + 3] = current_point & 0x000000ff;
+            ROS_WARN("Attempted to send PFRAME, but it would be larger than an IFRAME. IFRAME sent instead");
+            // Convert to binary data
+            std::vector<uint8_t> raw_data;
+            raw_data.resize(4 * tenbit_positions.size() + 4);
+            // Set the first 4 bytes to store frame type
+            uint32_t frame_type_header = frame_type_to_header(IFRAME);
+            raw_data[0] = frame_type_header & 0x000000ff;
+            frame_type_header = frame_type_header >> 8;
+            raw_data[1] = frame_type_header & 0x000000ff;
+            frame_type_header = frame_type_header >> 8;
+            raw_data[2] = frame_type_header & 0x000000ff;
+            frame_type_header = frame_type_header >> 8;
+            raw_data[3] = frame_type_header & 0x000000ff;
+            for (size_t tidx = 0, didx = 4; tidx < tenbit_positions.size(); tidx++, didx+=4)
+            {
+                uint32_t current_point = tenbit_positions[tidx];
+                raw_data[didx + 0] = current_point & 0x000000ff;
+                current_point = current_point >> 8;
+                raw_data[didx + 1] = current_point & 0x000000ff;
+                current_point = current_point >> 8;
+                raw_data[didx + 2] = current_point & 0x000000ff;
+                current_point = current_point >> 8;
+                raw_data[didx + 3] = current_point & 0x000000ff;
+            }
+            // Load into CompressedPointCloud2
+            teleop_msgs::CompressedPointCloud2 compressed_cloud;
+            compressed_cloud.header.stamp = cloud.header.stamp;
+            compressed_cloud.header.frame_id = cloud.header.frame_id;
+            compressed_cloud.is_dense = cloud.is_dense;
+            compressed_cloud.is_bigendian = cloud.is_bigendian;
+            compressed_cloud.fields = cloud.fields;
+            compressed_cloud.height = cloud.height;
+            compressed_cloud.width = cloud.width;
+            compressed_cloud.point_step = cloud.point_step;
+            compressed_cloud.row_step = cloud.row_step;
+            compressed_cloud.compression_type = teleop_msgs::CompressedPointCloud2::PC30;
+            compressed_cloud.compressed_data = compress_bytes(raw_data);
+            // Reset PFRAME counter
+            pframe_counter_ = 1;
+            // Store the current cloud into the encoder state
+            state_packed_.swap(tenbit_positions);
+            stored_state_.swap(safe_state);
+            return compressed_cloud;
         }
-        // Load into CompressedPointCloud2
-        teleop_msgs::CompressedPointCloud2 compressed_cloud;
-        compressed_cloud.header.stamp = cloud.header.stamp;
-        compressed_cloud.header.frame_id = cloud.header.frame_id;
-        compressed_cloud.is_dense = cloud.is_dense;
-        compressed_cloud.is_bigendian = cloud.is_bigendian;
-        compressed_cloud.fields = cloud.fields;
-        compressed_cloud.height = cloud.height;
-        compressed_cloud.width = cloud.width;
-        compressed_cloud.point_step = cloud.point_step;
-        compressed_cloud.row_step = cloud.row_step;
-        compressed_cloud.compression_type = teleop_msgs::CompressedPointCloud2::PC30;
-        compressed_cloud.compressed_data = compress_bytes(raw_data);
-        // Increment PFRAME counter
-        pframe_counter_++;
-        // Store the current cloud into the encoder state
-        state_packed_.swap(tenbit_positions);
-        stored_state_.swap(safe_state);
-        return compressed_cloud;
+        else
+        {
+            ROS_INFO("Completing PFRAME encode");
+            // P-Frame will be smaller, so we send it
+            // Convert to binary data
+            std::vector<uint8_t> raw_data;
+            raw_data.resize((4 * delta_data.size()) + 8);
+            // Set the first 4 bytes to store frame type
+            uint32_t frame_type_header = frame_type_to_header(PFRAME);
+            raw_data[0] = frame_type_header & 0x000000ff;
+            frame_type_header = frame_type_header >> 8;
+            raw_data[1] = frame_type_header & 0x000000ff;
+            frame_type_header = frame_type_header >> 8;
+            raw_data[2] = frame_type_header & 0x000000ff;
+            frame_type_header = frame_type_header >> 8;
+            raw_data[3] = frame_type_header & 0x000000ff;
+            // Set the next 4 bytes to store the decoded length
+            uint32_t decoded_data_length = (uint32_t)tenbit_positions.size();
+            raw_data[4] = decoded_data_length & 0x000000ff;
+            decoded_data_length = decoded_data_length >> 8;
+            raw_data[5] = decoded_data_length & 0x000000ff;
+            decoded_data_length = decoded_data_length >> 8;
+            raw_data[6] = decoded_data_length & 0x000000ff;
+            decoded_data_length = decoded_data_length >> 8;
+            raw_data[7] = decoded_data_length & 0x000000ff;
+            for (size_t tidx = 0, didx = 8; tidx < delta_data.size(); tidx++, didx+=4)
+            {
+                uint32_t current_point = delta_data[tidx];
+                raw_data[didx + 0] = current_point & 0x000000ff;
+                current_point = current_point >> 8;
+                raw_data[didx + 1] = current_point & 0x000000ff;
+                current_point = current_point >> 8;
+                raw_data[didx + 2] = current_point & 0x000000ff;
+                current_point = current_point >> 8;
+                raw_data[didx + 3] = current_point & 0x000000ff;
+            }
+            // Load into CompressedPointCloud2
+            teleop_msgs::CompressedPointCloud2 compressed_cloud;
+            compressed_cloud.header.stamp = cloud.header.stamp;
+            compressed_cloud.header.frame_id = cloud.header.frame_id;
+            compressed_cloud.is_dense = cloud.is_dense;
+            compressed_cloud.is_bigendian = cloud.is_bigendian;
+            compressed_cloud.fields = cloud.fields;
+            compressed_cloud.height = cloud.height;
+            compressed_cloud.width = cloud.width;
+            compressed_cloud.point_step = cloud.point_step;
+            compressed_cloud.row_step = cloud.row_step;
+            compressed_cloud.compression_type = teleop_msgs::CompressedPointCloud2::PC30;
+            compressed_cloud.compressed_data = compress_bytes(raw_data);
+            // Increment PFRAME counter
+            pframe_counter_++;
+            // Store the current cloud into the encoder state
+            state_packed_.swap(tenbit_positions);
+            stored_state_.swap(safe_state);
+            return compressed_cloud;
+        }
     }
 }
