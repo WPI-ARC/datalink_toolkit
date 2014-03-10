@@ -1,0 +1,24 @@
+<launch>
+
+  <arg name="image_name" default="camera" />
+  <arg name="output" default="screen" />
+  <arg name="remapped_tf" default="/tf" />
+  <arg name="default_rate" default="1.0" />
+  <arg name="quality" default="20" />
+  <arg name="override_timestamps" default="false" />
+
+  <arg name="node_name" default="$(arg image_name)" />
+
+  <node pkg="opportunistic_link" type="request_camera_link_endpoint" name="$(arg node_name)_camera_link_endpoint" output="$(arg output)" >
+    <param name="relay_topic" type="string" value="$(arg image_name)/relay/rgb/image" />
+    <param name="latched" type="bool" value="true" />
+    <param name="default_rate" type="double" value="$(arg default_rate)" />
+    <param name="default_quality" type="int" value="$(arg quality)" />
+    <param name="quality_ctrl" type="string" value="$(arg image_name)/rgb/quality" />
+    <param name="rate_ctrl" type="string" value="$(arg image_name)/rgb/rate" />
+    <param name="data_service" type="string" value="$(arg image_name)/rgb/data" />
+    <param name="override_timestamps" type="bool" value="$(arg override_timestamps)" />
+    <remap from="/tf" to="$(arg remapped_tf)" />
+  </node>
+
+</launch>

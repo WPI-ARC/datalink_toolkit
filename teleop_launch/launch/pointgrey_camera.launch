@@ -1,0 +1,20 @@
+<launch>
+
+  <arg name="serial" />
+  <arg name="camera_info_url" />
+  <arg name="camera_name" default="pointgrey" />
+  <arg name="frame_id" default="pointgrey_optical_frame" />
+  <arg name="output" default="screen" />
+  <arg name="remapped_tf" default="/tf" />
+
+  <!-- This will take care of lauching a pointgrey camera nodelet with an associated image_proc debayer node. -->
+  <group ns="$(arg camera_name)" >
+    <node pkg="nodelet" type="nodelet" name="pg_nodelet" output="$(arg output)" args="standalone pointgrey_camera_driver/PointGreyCameraNodelet" >
+      <param name="serial" value="$(arg serial)" />
+      <param name="camera_info_url" value="$(arg camera_info_url)" />
+      <param name="frame_id" value="$(arg frame_id)" />
+      <remap from="/tf" to="$(arg remapped_tf)" />
+    </node>
+  </group>
+
+</launch>

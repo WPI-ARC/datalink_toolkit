@@ -59,8 +59,8 @@ public:
             float secs = (float)(et.tv_sec - st.tv_sec);
             secs = secs + (float)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
             float ratio = ((float)res.image.data.size() / (float)last_image_->data.size()) * 100.0;
-            ROS_DEBUG("Compression of %f %% took %f seconds", ratio, secs);
-            ROS_DEBUG("Original size: %f KB - Compressed size: %f KB", ((float)last_image_->data.size() / 1000.0), ((float)res.image.data.size() / 1000.0));
+            ROS_INFO("Compression of %f %% took %f seconds", ratio, secs);
+            ROS_INFO("Original size: %f KB - Compressed size: %f KB", ((float)last_image_->data.size() / 1000.0), ((float)res.image.data.size() / 1000.0));
             // Clear the cache
             last_image_ = sensor_msgs::ImageConstPtr();
             last_info_ = sensor_msgs::CameraInfoConstPtr();

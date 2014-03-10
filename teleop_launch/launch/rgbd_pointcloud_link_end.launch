@@ -1,0 +1,24 @@
+<launch>
+
+  <arg name="pointcloud_name" default="camera" />
+  <arg name="output" default="screen" />
+  <arg name="remapped_tf" default="/tf" />
+  <arg name="default_rate" default="1.0" />
+  <arg name="filter_size" default="0.0" />
+  <arg name="override_timestamps" default="false" />
+
+  <arg name="node_name" default="$(arg pointcloud_name)" />
+
+  <node pkg="opportunistic_link" type="request_pointcloud_link_endpoint" name="$(arg node_name)_pointcloud_link_endpoint" output="$(arg output)" >
+    <param name="relay_topic" type="string" value="$(arg pointcloud_name)/relay/depth/points_xyz" />
+    <param name="latched" type="bool" value="true" />
+    <param name="default_rate" type="double" value="$(arg default_rate)" />
+    <param name="default_filter_size" type="double" value="$(arg filter_size)" />
+    <param name="filter_ctrl" type="string" value="$(arg pointcloud_name)/depth/quality" />
+    <param name="rate_ctrl" type="string" value="$(arg pointcloud_name)/depth/rate" />
+    <param name="data_service" type="string" value="$(arg pointcloud_name)/depth/data" />
+    <param name="override_timestamps" type="bool" value="$(arg override_timestamps)" />
+    <remap from="/tf" to="$(arg remapped_tf)" />
+  </node>
+
+</launch>

@@ -1,9 +1,0 @@
-<launch>
-
-  <node pkg="opportunistic_link" type="link_endpoint.py" name="pointcloud_endpoint" output="screen" >
-    <param name="topic_name" type="string" value="robot/kinect/depth_registered/points" />
-    <param name="topic_type" type="string" value="sensor_msgs/PointCloud2" />
-    <param name="transport_namespace" type="string" value="pointcloud_transport" />
-  </node>
-
-</launch>
