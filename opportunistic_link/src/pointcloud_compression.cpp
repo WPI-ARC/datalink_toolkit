@@ -5,7 +5,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
-#include <pcl/ros/conversions.h>
+#include <pcl/conversions.h>
+#include <pcl_conversions/pcl_conversions.h>
 #include <pcl/compression/octree_pointcloud_compression.h>
 #include <opportunistic_link/pointcloud_compression.h>
 #include <opportunistic_link/pc30_compression.h>
@@ -194,10 +195,18 @@ teleop_msgs::CompressedPointCloud2 PointCloudHandler::compress_pointcloud2(senso
     sensor_msgs::PointCloud2 intermediate;
     if (filter_size > 0.0)
     {
-        sensor_msgs::PointCloud2ConstPtr cloudptr(&cloud, dealocate_sensor_messages_pointcloud2_fn);
-        voxel_filter_.setInputCloud(cloudptr);
+        // Convert the ROS cloud to PCL for voxel filtering
+        pcl::PCLPointCloud2 pcl_cloud;
+        pcl::PCLPointCloud2 pcl_intermediate;
+        pcl_conversions::toPCL(cloud, pcl_cloud);
+        // Voxel filter the cloud
+        pcl::PCLPointCloud2ConstPtr pcl_cloud_ptr(&pcl_cloud);
+        voxel_filter_.setInputCloud(pcl_cloud_ptr);
         voxel_filter_.setLeafSize(filter_size, filter_size, filter_size);
-        voxel_filter_.filter(intermediate);
+        voxel_filter_.filter(pcl_intermediate);
+        // Convert the PCL cloud back to ROS for compression
+        pcl_conversions::moveFromPCL(pcl_cloud, intermediate);
+        intermediate.header = cloud.header;
     }
     else
     {

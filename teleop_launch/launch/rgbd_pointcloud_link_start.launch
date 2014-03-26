@@ -8,7 +8,7 @@
 
   <node pkg="opportunistic_link" type="request_pointcloud_link_startpoint" name="$(arg node_name)_pointcloud_link_startpoint" output="$(arg output)" >
     <param name="pointcloud_topic" type="string" value="$(arg pointcloud_name)/depth/points_xyz" />
-    <param name="compression_type" type="string" value="PC30" />
+    <param name="compression_type" type="string" value="none" />
     <param name="data_service" type="string" value="$(arg pointcloud_name)/depth/data" />
     <remap from="/tf" to="$(arg remapped_tf)" />
   </node>

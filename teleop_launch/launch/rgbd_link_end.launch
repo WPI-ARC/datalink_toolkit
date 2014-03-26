@@ -3,15 +3,15 @@
   <arg name="rgbd_name" default="camera" />
   <arg name="camera_rate" default="5.0" />
   <arg name="pointcloud_rate" default="1.0" />
-  <arg name="camera_quality" default="10" />
-  <arg name="pointcloud_filter" default="0.02" />
+  <arg name="camera_quality" default="90" />
+  <arg name="pointcloud_filter" default="0.0" />
   <arg name="override_timestamps" default="true" />
   <arg name="output" default="screen" />
   <arg name="remapped_tf" default="/tf" />
 
   <arg name="node_name" default="$(arg rgbd_name)" />
 
-  <include file="$(find hubo_launch)/launch/rgbd_pointcloud_link_end.launch" >
+  <include file="$(find teleop_launch)/launch/rgbd_pointcloud_link_end.launch" >
     <arg name="pointcloud_name" value="$(arg rgbd_name)" />
     <arg name="node_name" value="$(arg node_name)" />
     <arg name="default_rate" value="$(arg pointcloud_rate)" />
@@ -21,7 +21,7 @@
     <arg name="remapped_tf" value="$(arg remapped_tf)" />
   </include>
 
-  <include file="$(find hubo_launch)/launch/rgbd_image_link_end.launch" >
+  <include file="$(find teleop_launch)/launch/rgbd_image_link_end.launch" >
     <arg name="image_name" value="$(arg rgbd_name)" />
     <arg name="node_name" value="$(arg node_name)" />
     <arg name="default_rate" value="$(arg camera_rate)" />
