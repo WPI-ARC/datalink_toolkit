@@ -4,7 +4,8 @@
 #include <zlib.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/ros/conversions.h>
+#include <pcl/conversions.h>
+#include <pcl_conversions/pcl_conversions.h>
 #include <opportunistic_link/pc30_compression.h>
 
 #define snap(x) ((x)>=0?(int)((x)+0.5):(int)((x)-0.5))

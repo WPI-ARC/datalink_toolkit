@@ -4,8 +4,9 @@ project(opportunistic_link)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS rospy std_msgs sensor_msgs pcl pcl_ros teleop_msgs image_transport cv_bridge message_generation)
+find_package(catkin REQUIRED COMPONENTS rospy std_msgs sensor_msgs pcl_conversions teleop_msgs image_transport cv_bridge message_generation)
 find_package(OpenCV REQUIRED)
+find_package(PCL REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -39,8 +40,8 @@ catkin_python_setup()
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES opportunistic_link
-  CATKIN_DEPENDS rospy std_msgs sensor_msgs pcl pcl_ros teleop_msgs image_transport cv_bridge message_runtime
-  DEPENDS system_lib z rt OpenCV
+  CATKIN_DEPENDS rospy std_msgs sensor_msgs pcl_conversions teleop_msgs image_transport cv_bridge message_runtime
+  DEPENDS system_lib z rt OpenCV PCL
 )
 
 ###########
@@ -49,7 +50,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 
 set(CMAKE_CXX_FLAGS "-g")
 
@@ -63,17 +64,17 @@ target_link_libraries(image_compression ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} 
 # PC30 pointcloud compression library
 add_library(pc30_compression SHARED src/pc30_compression.cpp)
 add_dependencies(pc30_compression ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pc30_compression ${catkin_LIBRARIES} z)
+target_link_libraries(pc30_compression ${catkin_LIBRARIES} ${PCL_LIBRARIES} z)
 
 # PC60 pointcloud compression library
 add_library(pc60_compression SHARED src/pc60_compression.cpp)
 add_dependencies(pc60_compression ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pc60_compression ${catkin_LIBRARIES} z)
+target_link_libraries(pc60_compression ${catkin_LIBRARIES} ${PCL_LIBRARIES} z)
 
 # Pointcloud compression library
 add_library(pointcloud_compression SHARED src/pointcloud_compression.cpp)
 add_dependencies(pointcloud_compression ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pointcloud_compression pc30_compression pc60_compression ${catkin_LIBRARIES} z)
+target_link_libraries(pointcloud_compression pc30_compression pc60_compression ${catkin_LIBRARIES} ${PCL_LIBRARIES} z)
 
 ## Declare cpp executables
 

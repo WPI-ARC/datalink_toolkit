@@ -5,7 +5,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
-#include <pcl/ros/conversions.h>
+#include <pcl/conversions.h>
+#include <pcl_conversions/pcl_conversions.h>
 #include <pcl/compression/octree_pointcloud_compression.h>
 #include <opportunistic_link/pc30_compression.h>
 #include <opportunistic_link/pc60_compression.h>
@@ -27,14 +28,9 @@ namespace pointcloud_compression
     {
     protected:
 
-        pcl::VoxelGrid<sensor_msgs::PointCloud2> voxel_filter_;
-#if (PCL_MAJOR_VERSION > 1 || PCL_MINOR_VERSION > 6)
+        pcl::VoxelGrid<pcl::PCLPointCloud2> voxel_filter_;
         pcl::io::OctreePointCloudCompression<pcl::PointXYZRGB> pcl_encoder_;
         pcl::io::OctreePointCloudCompression<pcl::PointXYZRGB> pcl_decoder_;
-#else
-        pcl::octree::PointCloudCompression<pcl::PointXYZRGB> pcl_encoder_;
-        pcl::octree::PointCloudCompression<pcl::PointXYZRGB> pcl_decoder_;
-#endif
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr uncompressed_cloud_ptr_;
         pc30_compression::PC30Compressor pc30_encoder_;
         pc30_compression::PC30Compressor pc30_decoder_;

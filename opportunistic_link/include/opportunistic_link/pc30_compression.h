@@ -4,7 +4,8 @@
 #include <zlib.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/ros/conversions.h>
+#include <pcl/conversions.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #ifndef PC30_COMPRESSION_H
 #define PC30_COMPRESSION_H
