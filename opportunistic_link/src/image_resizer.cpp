@@ -6,6 +6,7 @@
 #include <teleop_msgs/RateControl.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv/cv.h>
+#include <sensor_msgs/image_encodings.h>
 
 class ImageResizer
 {
@@ -67,14 +68,35 @@ public:
         else
         {
             // Keep RGB channels
-            resized = cv::Mat(cv::Size(resized_width_, resized_height_), CV_8UC3);
+            resized = cv::Mat(cv::Size(resized_width_, resized_height_), cv_bridge::getCvType(image->encoding));
         }
         // Remove color if desired
         cv::Mat intermediate;
         if (convert_to_bw_)
         {
             // Convery to grayscale
-            cv::cvtColor(cv_ptr->image, intermediate, CV_BGR2GRAY);
+            // Pick which conversion to use depending on the source encoding
+            if (image->encoding == sensor_msgs::image_encodings::RGB8 || image->encoding == sensor_msgs::image_encodings::RGB16)
+            {
+                cv::cvtColor(cv_ptr->image, intermediate, CV_RGB2GRAY);
+            }
+            else if (image->encoding == sensor_msgs::image_encodings::RGBA8 || image->encoding == sensor_msgs::image_encodings::RGBA16)
+            {
+                cv::cvtColor(cv_ptr->image, intermediate, CV_RGBA2GRAY);
+            }
+            else if (image->encoding == sensor_msgs::image_encodings::BGR8 || image->encoding == sensor_msgs::image_encodings::BGR16)
+            {
+                cv::cvtColor(cv_ptr->image, intermediate, CV_BGR2GRAY);
+            }
+            else if (image->encoding == sensor_msgs::image_encodings::BGRA8 || image->encoding == sensor_msgs::image_encodings::BGRA16)
+            {
+                cv::cvtColor(cv_ptr->image, intermediate, CV_BGRA2GRAY);
+            }
+            else
+            {
+                ROS_WARN("Unable to match image encoding to an OpenCV conversion option, using CV_BGR2GRAY as a default");
+                cv::cvtColor(cv_ptr->image, intermediate, CV_BGR2GRAY);
+            }
         }
         else
         {

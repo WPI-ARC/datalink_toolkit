@@ -78,16 +78,6 @@ target_link_libraries(pointcloud_compression pc30_compression pc60_compression $
 
 ## Declare cpp executables
 
-# ImageInfo synchronizer node
-add_executable(imageinfo_synchronizer src/imageinfo_synchronizer.cpp)
-add_dependencies(imageinfo_synchronizer ${catkin_EXPORTED_TARGETS})
-target_link_libraries(imageinfo_synchronizer ${catkin_LIBRARIES})
-
-# Camera manager node
-add_executable(camera_manager src/camera_manager.cpp)
-add_dependencies(camera_manager ${catkin_EXPORTED_TARGETS})
-target_link_libraries(camera_manager ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-
 # Image resizing node
 add_executable(image_resizer src/image_resizer.cpp)
 add_dependencies(image_resizer ${catkin_EXPORTED_TARGETS})

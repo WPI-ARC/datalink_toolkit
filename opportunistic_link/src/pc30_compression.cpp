@@ -242,22 +242,18 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(teleop_msgs::Compres
                 ROS_ERROR("Compressed data does not contain a valid PC30 PFRAME header");
                 throw std::invalid_argument("Compressed data does not contain a valid PC30 PFRAME header");
             }
-            // P-Frames that only have a header mean that the pointcloud is empty
+            // P-Frames that only have a header mean that there is no delta from the previous frame
             else if (decompressed_encoded_data.size() == 8)
             {
-                ROS_WARN("PC30 PFRAME contains an empty pointcloud");
+                ROS_INFO("Decoding a PFRAME with zero delta");
+                // Convert the current decoder state to a PCL pointcloud
+                pcl::PointCloud<pcl::PointXYZ> current_cloud = get_current_pointcloud();
+                // Convert to ROS pointcloud
                 sensor_msgs::PointCloud2 decoded;
+                pcl::toROSMsg(current_cloud, decoded);
+                // Fill in the header information
                 decoded.header.stamp = compressed.header.stamp;
                 decoded.header.frame_id = compressed.header.frame_id;
-                decoded.is_dense = compressed.is_dense;
-                decoded.is_bigendian = compressed.is_bigendian;
-                decoded.fields = compressed.fields;
-                decoded.height = compressed.height;
-                decoded.width = compressed.width;
-                decoded.point_step = compressed.point_step;
-                decoded.row_step = compressed.row_step;
-                // Flush the stored state, since we aren't tracking any points
-                state_packed_.clear();
                 ROS_INFO("End P-FRAME decode");
                 return decoded;
             }

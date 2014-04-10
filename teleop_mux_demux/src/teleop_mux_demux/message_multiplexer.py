@@ -27,9 +27,8 @@ class MessageMultiplexer:
         rospy.loginfo("Loaded Multiplexer")
         rate = rospy.Rate(publication_rate)
         while not rospy.is_shutdown():
-            self.queue_lock.acquire()
-            self.send()
-            self.queue_lock.release()
+            with self.queue_lock:
+                self.send()
             rate.sleep()
 
     def send(self):
@@ -43,14 +42,13 @@ class MessageMultiplexer:
         self.cur_index = 0
 
     def sub_cb(self, msg):
-        self.queue_lock.acquire()
-        self.queue[self.cur_index] = msg
-        if (self.cur_index < self.max_index):
-            self.cur_index += 1
-        else:
-            self.cur_index += 1
-            self.send()
-        self.queue_lock.release()
+        with self.queue_lock:
+            self.queue[self.cur_index] = msg
+            if (self.cur_index < self.max_index):
+                self.cur_index += 1
+            else:
+                self.cur_index += 1
+                self.send()
 
 if __name__ == '__main__':
     rospy.init_node('message_multiplexer')
