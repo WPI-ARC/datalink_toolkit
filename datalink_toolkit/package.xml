@@ -10,6 +10,7 @@
 
   <run_depend>datalink_msgs</run_depend>
   <run_depend>datalink_mux_demux</run_depend>
+  <run_depend>pointcloud_compression</run_depend>
   <run_depend>opportunistic_link</run_depend>
   <run_depend>datalink_launch</run_depend>
 

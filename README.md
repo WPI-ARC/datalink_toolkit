@@ -13,34 +13,38 @@ Please note that this software is primarily written for ROS Hydro, since that is
 
 This repository is structured around 4 core packages:
 
-1.  `teleop_launch` - Launch files for teleop links using both the nodes in this repository and other packages (namely a custom version of `openni.launch` to support divorced TF trees). The launch files in this package provide examples for how to configure the various link components in this repository.
+1.  `datalink_launch` - Launch files for teleop links using both the nodes in this repository and other packages (namely a custom version of `openni2.launch` to support divorced TF trees). The launch files in this package provide examples for how to configure the various link components in this repository.
 
-2.  `opportunistic_link` - This package provides an automatically switched ROS transmit link that allows for a topic to be sent once over the link to multiple subscribers. To reduce data demands, the link stops data flow automatically when no subscribers are connected.
+2.  `pointcloud_compression` - Library of pointcloud compression systems used to compress pointclouds for transmission over low-bandwidth datalinks.
 
-3.  `teleop_msgs` - Message types for teleoperation datalinks, namely to support message aggregation and compression.
+3.  `opportunistic_link` - This package provides an automatically switched ROS transmit link that allows for a topic to be sent once over the link to multiple subscribers. To reduce data demands, the link stops data flow automatically when no subscribers are connected.
 
-4.  `teleop_mux_demux` - Packages provides nodes for message aggregation/multiplexing and message dis-aggregation/demultiplexing. This allows multiple message topics to be combined together and sent over a single ROS publisher->subscriber link.
+4.  `datalink_msgs` - Message types for low-bandwidth datalinks, namely to support message aggregation and compression.
+
+5.  `datalink_mux_demux` - Packages provides nodes for message aggregation/multiplexing and message dis-aggregation/demultiplexing. This allows multiple message topics to be combined together and sent over a single ROS publisher->subscriber link.
 
 Stability and development status
 --------------------------------
-`opportunistic_link` - Package is stable and tested with various messages including `sensor_msgs/PointCloud2` from a Kinect with no appreciable consequence of overhead.
+`opportunistic_link` - Package is stable and used for our DRC team.
 
-`teleop_msgs` - Package is currently stable with no additional message types planned.
+`datalink_msgs` - Package is currently stable with no additional message types planned.
 
-`teleop_launch` - New example and test launch files are added fairly frequently, but all available launch files should be considered stable.
+`pointcloud_compression` - Package is currently stable. Additional compression systems will be added if necessary.
 
-`teleop_mux_demux` - Package is semi-stable and currently finishing development. Awaiting testing to see the effects of processing overhead.
+`datalink_launch` - All launch files should be considered stable. New launch files may be added to provide better examples or provided support for new sensors.
+
+`datalink_mux_demux` - Package is experimental.
 
 Depencies
 ---------
-1.  Full ROS Groovy installation - on Ubuntu systems: `$ sudo apt-get install ros-groovy-desktop-full`
+1.  Full ROS Hydro installation - on Ubuntu systems: `$ sudo apt-get install ros-hydro-desktop-full`
 
 Build and usage instructions
 ----------------------------
 First, clone this repository:
 ```
 $ cd /your/catkin/workspace/src
-$ git clone https://github.com/WPI-ARC/teleop_toolkit.git
+$ git clone https://github.com/WPI-ARC/datalink_toolkit.git
 $ rospack profile
 ```
 To build all packages in this repository:
@@ -62,4 +66,4 @@ To use, you must source the workspace:
 $ source devel/setup.bash
 ```
 
-For usage information and instructions on running components of these packages together, see the repository [Wiki](https://github.com/WPI-ARC/teleop_toolkit/wiki).
+For usage information and instructions on running components of these packages together, see the repository [Wiki](https://github.com/WPI-ARC/datalink_toolkit/wiki).
