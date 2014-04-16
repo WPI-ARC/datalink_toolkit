@@ -1,33 +1,23 @@
 <?xml version="1.0"?>
 <package>
-  <name>opportunistic_link</name>
+  <name>datalink_mux_demux</name>
   <version>0.1.0</version>
-  <description>Datalink nodes for using ROS over low-bandwidth networks</description>
+  <description>The datalink_mux_demux package</description>
 
   <maintainer email="calder.pg@gmail.com">Calder Phillips-Grafflin</maintainer>
 
   <license>BSD</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-
   <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>datalink_msgs</build_depend>
-  <build_depend>image_transport</build_depend>
-  <build_depend>cv_bridge</build_depend>
-  <build_depend>pointcloud_compression</build_depend>
+  <build_depend>teleop_msgs</build_depend>
   <build_depend>message_generation</build_depend>
 
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>datalink_msgs</run_depend>
-  <run_depend>image_transport</run_depend>
-  <run_depend>cv_bridge</run_depend>
-  <run_depend>pointcloud_compression</run_depend>
+  <run_depend>teleop_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
-
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -2,8 +2,8 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
-#include <teleop_msgs/LinkControl.h>
-#include <teleop_msgs/RateControl.h>
+#include <datalink_msgs/LinkControl.h>
+#include <datalink_msgs/RateControl.h>
 
 class ImageLinkEndpoint
 {
@@ -27,7 +27,7 @@ public:
         forward_ = false;
         link_topic_ = link_topic;
         link_ctrl_service_ = link_ctrl_service;
-        link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service_);
+        link_ctrl_client_ = nh_.serviceClient<datalink_msgs::LinkControl>(link_ctrl_service_);
         link_watchdog_ = nh_.createTimer(ros::Duration(10.0), &ImageLinkEndpoint::link_watchdog_cb, this, true);
         image_transport::SubscriberStatusCallback camera_image_cb = boost::bind(&ImageLinkEndpoint::image_cb, this);
         image_pub_ = it_.advertise(relay_topic, 1, camera_image_cb, camera_image_cb, ros::VoidPtr(), latched);
@@ -60,8 +60,8 @@ public:
         image_subs_ = image_pub_.getNumSubscribers();
         if (image_subs_ == 1)
         {
-            teleop_msgs::LinkControl::Request req;
-            teleop_msgs::LinkControl::Response res;
+            datalink_msgs::LinkControl::Request req;
+            datalink_msgs::LinkControl::Response res;
             req.Forward = true;
             if (link_ctrl_client_.call(req, res) && res.State)
             {
@@ -75,8 +75,8 @@ public:
         }
         else if (image_subs_ < 1)
         {
-            teleop_msgs::LinkControl::Request req;
-            teleop_msgs::LinkControl::Response res;
+            datalink_msgs::LinkControl::Request req;
+            datalink_msgs::LinkControl::Response res;
             req.Forward = false;
             if (link_ctrl_client_.call(req, res) && !res.State)
             {
@@ -106,9 +106,9 @@ public:
         {
             ROS_INFO("Attempting to reconnect");
             image_sub_ = it_.subscribe(link_topic_, 1, &ImageLinkEndpoint::image_data_cb, this);
-            link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service_);
-            teleop_msgs::LinkControl::Request req;
-            teleop_msgs::LinkControl::Response res;
+            link_ctrl_client_ = nh_.serviceClient<datalink_msgs::LinkControl>(link_ctrl_service_);
+            datalink_msgs::LinkControl::Request req;
+            datalink_msgs::LinkControl::Response res;
             req.Forward = forward_;
             if (link_ctrl_client_.call(req, res))
             {

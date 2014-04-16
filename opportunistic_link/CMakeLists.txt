@@ -4,9 +4,8 @@ project(opportunistic_link)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS rospy std_msgs sensor_msgs pcl_conversions teleop_msgs image_transport cv_bridge message_generation)
+find_package(catkin REQUIRED COMPONENTS rospy std_msgs sensor_msgs datalink_msgs image_transport cv_bridge pointcloud_compression message_generation)
 find_package(OpenCV REQUIRED)
-find_package(PCL REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -37,12 +36,7 @@ catkin_python_setup()
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES opportunistic_link
-  CATKIN_DEPENDS rospy std_msgs sensor_msgs pcl_conversions teleop_msgs image_transport cv_bridge message_runtime
-  DEPENDS system_lib z rt OpenCV PCL
-)
+catkin_package(CATKIN_DEPENDS rospy std_msgs sensor_msgs datalink_msgs image_transport cv_bridge message_runtime pointcloud_compression DEPENDS system_lib z rt OpenCV)
 
 ###########
 ## Build ##
@@ -50,9 +44,9 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
-set(CMAKE_CXX_FLAGS "-g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 ## Declare a cpp library
 
@@ -60,21 +54,6 @@ set(CMAKE_CXX_FLAGS "-g")
 add_library(image_compression SHARED src/image_compression.cpp)
 add_dependencies(image_compression ${catkin_EXPORTED_TARGETS})
 target_link_libraries(image_compression ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} z)
-
-# PC30 pointcloud compression library
-add_library(pc30_compression SHARED src/pc30_compression.cpp)
-add_dependencies(pc30_compression ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pc30_compression ${catkin_LIBRARIES} ${PCL_LIBRARIES} z)
-
-# PC60 pointcloud compression library
-add_library(pc60_compression SHARED src/pc60_compression.cpp)
-add_dependencies(pc60_compression ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pc60_compression ${catkin_LIBRARIES} ${PCL_LIBRARIES} z)
-
-# Pointcloud compression library
-add_library(pointcloud_compression SHARED src/pointcloud_compression.cpp)
-add_dependencies(pointcloud_compression ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pointcloud_compression pc30_compression pc60_compression ${catkin_LIBRARIES} ${PCL_LIBRARIES} z)
 
 ## Declare cpp executables
 
@@ -127,20 +106,20 @@ target_link_libraries(camera_link_endpoint ${catkin_LIBRARIES})
 # Service-based compressed pointcloud handlers
 add_executable(request_pointcloud_link_startpoint src/request_pointcloud_link_startpoint.cpp)
 add_dependencies(request_pointcloud_link_startpoint ${catkin_EXPORTED_TARGETS})
-target_link_libraries(request_pointcloud_link_startpoint pointcloud_compression ${catkin_LIBRARIES} rt)
+target_link_libraries(request_pointcloud_link_startpoint ${catkin_LIBRARIES} rt)
 
 add_executable(request_pointcloud_link_endpoint src/request_pointcloud_link_endpoint.cpp)
 add_dependencies(request_pointcloud_link_endpoint ${catkin_EXPORTED_TARGETS})
-target_link_libraries(request_pointcloud_link_endpoint pointcloud_compression ${catkin_LIBRARIES} rt)
+target_link_libraries(request_pointcloud_link_endpoint ${catkin_LIBRARIES} rt)
 
 # Compressed pointcloud handlers
 add_executable(limited_pointcloud_link_startpoint src/limited_pointcloud_link_startpoint.cpp)
 add_dependencies(limited_pointcloud_link_startpoint ${catkin_EXPORTED_TARGETS})
-target_link_libraries(limited_pointcloud_link_startpoint pointcloud_compression ${catkin_LIBRARIES} rt)
+target_link_libraries(limited_pointcloud_link_startpoint ${catkin_LIBRARIES} rt)
 
 add_executable(pointcloud_link_endpoint src/pointcloud_link_endpoint.cpp)
 add_dependencies(pointcloud_link_endpoint ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pointcloud_link_endpoint pointcloud_compression ${catkin_LIBRARIES} rt)
+target_link_libraries(pointcloud_link_endpoint ${catkin_LIBRARIES} rt)
 
 #############
 ## Install ##

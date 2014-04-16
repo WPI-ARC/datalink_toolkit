@@ -1,10 +1,10 @@
 #include <ros/ros.h>
 #include <time.h>
-#include <teleop_msgs/LinkControl.h>
-#include <teleop_msgs/RateControl.h>
+#include <datalink_msgs/LinkControl.h>
+#include <datalink_msgs/RateControl.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <teleop_msgs/CompressedPointCloud2.h>
-#include <opportunistic_link/pointcloud_compression.h>
+#include <datalink_msgs/CompressedPointCloud2.h>
+#include <pointcloud_compression/pointcloud_compression.h>
 
 class Pointcloud2LinkEndpoint
 {
@@ -30,7 +30,7 @@ public:
         override_timestamps_ = override_timestamps;
         link_topic_ = link_topic;
         link_ctrl_service_ = link_ctrl_service;
-        link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service_);
+        link_ctrl_client_ = nh_.serviceClient<datalink_msgs::LinkControl>(link_ctrl_service_);
         link_watchdog_ = nh_.createTimer(ros::Duration(10.0), &Pointcloud2LinkEndpoint::link_watchdog_cb, this, true);
         ros::SubscriberStatusCallback pointcloud_sub_cb = boost::bind(&Pointcloud2LinkEndpoint::subscriber_cb, this);
         pointcloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(relay_topic, 1, pointcloud_sub_cb, pointcloud_sub_cb, ros::VoidPtr(), latched);
@@ -49,7 +49,7 @@ public:
         }
     }
 
-    void pointcloud_data_cb(teleop_msgs::CompressedPointCloud2 compressed)
+    void pointcloud_data_cb(datalink_msgs::CompressedPointCloud2 compressed)
     {
         try
         {
@@ -80,8 +80,8 @@ public:
         pointcloud_subs_ = pointcloud_pub_.getNumSubscribers();
         if (pointcloud_subs_ == 1)
         {
-            teleop_msgs::LinkControl::Request req;
-            teleop_msgs::LinkControl::Response res;
+            datalink_msgs::LinkControl::Request req;
+            datalink_msgs::LinkControl::Response res;
             req.Forward = true;
             if (link_ctrl_client_.call(req, res) && res.State)
             {
@@ -95,8 +95,8 @@ public:
         }
         else if (pointcloud_subs_ < 1)
         {
-            teleop_msgs::LinkControl::Request req;
-            teleop_msgs::LinkControl::Response res;
+            datalink_msgs::LinkControl::Request req;
+            datalink_msgs::LinkControl::Response res;
             req.Forward = false;
             if (link_ctrl_client_.call(req, res) && !res.State)
             {
@@ -126,9 +126,9 @@ public:
         {
             ROS_INFO("Attempting to reconnect");
             compressed_sub_ = nh_.subscribe(link_topic_, 1, &Pointcloud2LinkEndpoint::pointcloud_data_cb, this);
-            link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service_);
-            teleop_msgs::LinkControl::Request req;
-            teleop_msgs::LinkControl::Response res;
+            link_ctrl_client_ = nh_.serviceClient<datalink_msgs::LinkControl>(link_ctrl_service_);
+            datalink_msgs::LinkControl::Request req;
+            datalink_msgs::LinkControl::Response res;
             req.Forward = forward_;
             if (link_ctrl_client_.call(req, res))
             {

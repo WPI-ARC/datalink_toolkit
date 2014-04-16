@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <name>datalink_toolkit</name>
+  <version>0.1.0</version>
+  <description>Tools for using ROS over limited bandwidth datalinks</description>
+  <maintainer email="calder.pg@gmail.com">Calder Phillips-Grafflin</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>datalink_msgs</run_depend>
+  <run_depend>datalink_mux_demux</run_depend>
+  <run_depend>opportunistic_link</run_depend>
+  <run_depend>datalink_launch</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>

@@ -2,7 +2,7 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
-#include <teleop_msgs/RequestCamera.h>
+#include <datalink_msgs/RequestCamera.h>
 #include <opportunistic_link/image_compression.h>
 
 class RequestCameraLinkStartpoint
@@ -39,7 +39,7 @@ public:
         }
     }
 
-    bool data_cb(teleop_msgs::RequestCamera::Request& req, teleop_msgs::RequestCamera::Response& res)
+    bool data_cb(datalink_msgs::RequestCamera::Request& req, datalink_msgs::RequestCamera::Response& res)
     {
         if (last_image_ && last_info_)
         {

@@ -9,7 +9,7 @@
 import rospy
 import threading
 from std_msgs.msg import *
-from teleop_msgs.srv import *
+from datalink_msgs.srv import *
 import rate_controller
 
 class RateController:

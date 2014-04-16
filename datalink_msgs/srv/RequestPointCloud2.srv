@@ -1,0 +1,5 @@
+bool reset_encoder
+float32 filter_size
+---
+bool available
+datalink_msgs/CompressedPointCloud2 cloud

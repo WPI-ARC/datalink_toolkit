@@ -1,11 +1,11 @@
 #include <ros/ros.h>
 #include <time.h>
-#include <teleop_msgs/RequestPointCloud2.h>
-#include <teleop_msgs/RateControl.h>
-#include <teleop_msgs/FilterControl.h>
+#include <datalink_msgs/RequestPointCloud2.h>
+#include <datalink_msgs/RateControl.h>
+#include <datalink_msgs/FilterControl.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <teleop_msgs/CompressedPointCloud2.h>
-#include <opportunistic_link/pointcloud_compression.h>
+#include <datalink_msgs/CompressedPointCloud2.h>
+#include <pointcloud_compression/pointcloud_compression.h>
 
 class RequestPointcloud2LinkEndpoint
 {
@@ -36,7 +36,7 @@ public:
             repub_rate_ = ros::Rate(forward_rate_);
         }
         override_timestamps_ = override_timestamps;
-        data_client_ = nh_.serviceClient<teleop_msgs::RequestPointCloud2>(data_service);
+        data_client_ = nh_.serviceClient<datalink_msgs::RequestPointCloud2>(data_service);
         rate_server_ = nh_.advertiseService(rate_ctrl_service, &RequestPointcloud2LinkEndpoint::rate_cb, this);
         filter_server_ = nh_.advertiseService(filter_ctrl_service, &RequestPointcloud2LinkEndpoint::filter_cb, this);
         ros::SubscriberStatusCallback pointcloud_sub_cb = boost::bind(&RequestPointcloud2LinkEndpoint::subscriber_cb, this);
@@ -82,8 +82,8 @@ public:
 
     void get_pointcloud()
     {
-        teleop_msgs::RequestPointCloud2::Request req;
-        teleop_msgs::RequestPointCloud2::Response res;
+        datalink_msgs::RequestPointCloud2::Request req;
+        datalink_msgs::RequestPointCloud2::Response res;
         // Set the filter size for pre-compression voxel filtering
         req.filter_size = filter_size_;
         if (data_client_.call(req, res))
@@ -117,7 +117,7 @@ public:
         }
     }
 
-    bool filter_cb(teleop_msgs::FilterControl::Request& req, teleop_msgs::FilterControl::Response& res)
+    bool filter_cb(datalink_msgs::FilterControl::Request& req, datalink_msgs::FilterControl::Response& res)
     {
         if (req.FilterSize >= 0.0)
         {
@@ -133,7 +133,7 @@ public:
         return true;
     }
 
-    bool rate_cb(teleop_msgs::RateControl::Request& req, teleop_msgs::RateControl::Response& res)
+    bool rate_cb(datalink_msgs::RateControl::Request& req, datalink_msgs::RateControl::Response& res)
     {
         if (req.Rate > 0.0 && (req.Rate != INFINITY) && (req.Rate != NAN))
         {

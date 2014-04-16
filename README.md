@@ -1,17 +1,15 @@
-teleop_toolkit
+datalink_toolkit
 ==============
 
-Tools for teleoperation over limited bandwidth datalinks using ROS
+Tools for using ROS over limited bandwidth datalinks
 
 *While this code is freely licensed (2-clause BSD), we do ask that you send [us](mailto:calder.pg@gmail.com) an email so we can see who is using this software.*
 
 Repository structure
 --------------------
-Unlike earlier Catkinized software we have provided, this repository does not contain a Catkin workspace. As we expect that other teams will be well on their way to migrating to ROS Groovy, the difficulties of managing multiple workspaces do not justify the convenience of distributing these packages in their own workspace. As such, you will need to clone this repository inside the `src/` directory of an existing Catkin workspace.
+Unlike earlier Catkinized software we have provided, this repository does not contain a Catkin workspace. As we expect that other teams will be well on their way to migrating to Catkin, the difficulties of managing multiple workspaces do not justify the convenience of distributing these packages in their own workspace. As such, you will need to clone this repository inside the `src/` directory of an existing Catkin workspace.
 
-Please note that this software is structured for ROS Groovy+, and is incompatible with ROS Fuerte and earlier.
-
-**The packages in this repository rely heavily on several language features of Python, namely dynamic typing, duck typing, and runtime library imports. Python is not a particularly fast language. These packages are designed for a single purpose - reducing the amount of data sent over a datalink. Using thse packages will likely increase CPU load on both sender and receiver; this is a known performance effect and should be planned for.**
+Please note that this software is primarily written for ROS Hydro, since that is what we are using for active development. Since this software was initially developed on ROS Groovy, most parts are (and should remain) backwards-compatible. Due to the use of Catkin, this software is incompatible with ROS Fuerte and earlier.
 
 This repository is structured around 4 core packages:
 

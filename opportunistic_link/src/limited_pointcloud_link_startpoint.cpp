@@ -1,10 +1,10 @@
 #include <ros/ros.h>
 #include <time.h>
-#include <teleop_msgs/LinkControl.h>
-#include <teleop_msgs/RateControl.h>
+#include <datalink_msgs/LinkControl.h>
+#include <datalink_msgs/RateControl.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <teleop_msgs/CompressedPointCloud2.h>
-#include <opportunistic_link/pointcloud_compression.h>
+#include <datalink_msgs/CompressedPointCloud2.h>
+#include <pointcloud_compression/pointcloud_compression.h>
 
 class Pointcloud2LinkStartpoint
 {
@@ -20,7 +20,7 @@ protected:
     ros::Publisher compressed_pub_;
     ros::ServiceServer link_server_;
     ros::ServiceServer rate_server_;
-    std::vector<teleop_msgs::CompressedPointCloud2> pointclouds_;
+    std::vector<datalink_msgs::CompressedPointCloud2> pointclouds_;
     pointcloud_compression::PointCloudHandler compressor_;
 
 public:
@@ -38,33 +38,33 @@ public:
         {
             repub_rate_ = ros::Rate(forward_rate_);
         }
-        compressed_pub_ = nh_.advertise<teleop_msgs::CompressedPointCloud2>(link_topic, 1, true);
+        compressed_pub_ = nh_.advertise<datalink_msgs::CompressedPointCloud2>(link_topic, 1, true);
         pointcloud_sub_ = nh_.subscribe(pointcloud_topic, 1, &Pointcloud2LinkStartpoint::pointcloud_cb, this);
         link_server_ = nh_.advertiseService(link_ctrl_service, &Pointcloud2LinkStartpoint::link_control_cb, this);
         rate_server_ = nh_.advertiseService(rate_ctrl_service, &Pointcloud2LinkStartpoint::rate_control_cb, this);
-        if (compression_type == teleop_msgs::CompressedPointCloud2::ZLIB)
+        if (compression_type == datalink_msgs::CompressedPointCloud2::ZLIB)
         {
-            compression_type_ = teleop_msgs::CompressedPointCloud2::ZLIB;
+            compression_type_ = datalink_msgs::CompressedPointCloud2::ZLIB;
             ROS_INFO("Relay using ZLIB compression");
         }
-        else if (compression_type == teleop_msgs::CompressedPointCloud2::PCL)
+        else if (compression_type == datalink_msgs::CompressedPointCloud2::PCL)
         {
-            compression_type_ = teleop_msgs::CompressedPointCloud2::PCL;
+            compression_type_ = datalink_msgs::CompressedPointCloud2::PCL;
             ROS_INFO("Relay using PCL compression");
         }
-        else if (compression_type == teleop_msgs::CompressedPointCloud2::PC30)
+        else if (compression_type == datalink_msgs::CompressedPointCloud2::PC30)
         {
-            compression_type_ = teleop_msgs::CompressedPointCloud2::PC30;
+            compression_type_ = datalink_msgs::CompressedPointCloud2::PC30;
             ROS_INFO("Relay using PC30 compression");
         }
-        else if (compression_type == teleop_msgs::CompressedPointCloud2::PC60)
+        else if (compression_type == datalink_msgs::CompressedPointCloud2::PC60)
         {
-            compression_type_ = teleop_msgs::CompressedPointCloud2::PC60;
+            compression_type_ = datalink_msgs::CompressedPointCloud2::PC60;
             ROS_INFO("Relay using PC60 compression");
         }
         else
         {
-            compression_type_ = teleop_msgs::CompressedPointCloud2::NONE;
+            compression_type_ = datalink_msgs::CompressedPointCloud2::NONE;
             ROS_WARN("Relay using NONE compression");
         }
         ROS_INFO("Relay using %f voxel filter size", filter_size_);
@@ -91,7 +91,7 @@ public:
         }
     }
 
-    bool link_control_cb(teleop_msgs::LinkControl::Request& req, teleop_msgs::LinkControl::Response& res)
+    bool link_control_cb(datalink_msgs::LinkControl::Request& req, datalink_msgs::LinkControl::Response& res)
     {
         forward_ = req.Forward;
         res.State = forward_;
@@ -106,7 +106,7 @@ public:
         return true;
     }
 
-    bool rate_control_cb(teleop_msgs::RateControl::Request& req, teleop_msgs::RateControl::Response& res)
+    bool rate_control_cb(datalink_msgs::RateControl::Request& req, datalink_msgs::RateControl::Response& res)
     {
         if (req.Rate > 0.0 && (req.Rate != INFINITY) && (req.Rate != NAN))
         {
@@ -153,7 +153,7 @@ public:
         {
             struct timespec st, et;
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &st);
-            teleop_msgs::CompressedPointCloud2 compressed = compressor_.compress_pointcloud2(cloud, compression_type_, filter_size_);
+            datalink_msgs::CompressedPointCloud2 compressed = compressor_.compress_pointcloud2(cloud, compression_type_, filter_size_);
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &et);
             float secs = (float)(et.tv_sec - st.tv_sec);
             secs = secs + (float)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
@@ -203,23 +203,23 @@ int main(int argc, char** argv)
     uint8_t compression_id;
     if (compression_type.compare("ZLIB") == 0)
     {
-        compression_id = teleop_msgs::CompressedPointCloud2::ZLIB;
+        compression_id = datalink_msgs::CompressedPointCloud2::ZLIB;
     }
     else if (compression_type.compare("PCL") == 0)
     {
-        compression_id = teleop_msgs::CompressedPointCloud2::PCL;
+        compression_id = datalink_msgs::CompressedPointCloud2::PCL;
     }
     else if (compression_type.compare("PC30") == 0)
     {
-        compression_id = teleop_msgs::CompressedPointCloud2::PC30;
+        compression_id = datalink_msgs::CompressedPointCloud2::PC30;
     }
     else if (compression_type.compare("PC60") == 0)
     {
-        compression_id = teleop_msgs::CompressedPointCloud2::PC60;
+        compression_id = datalink_msgs::CompressedPointCloud2::PC60;
     }
     else
     {
-        compression_id = teleop_msgs::CompressedPointCloud2::NONE;
+        compression_id = datalink_msgs::CompressedPointCloud2::NONE;
     }
     Pointcloud2LinkStartpoint startpoint(nh, default_rate, compression_id, filter_size, pointcloud_topic, link_topic, link_ctrl_service, rate_ctrl_service);
     ROS_INFO("...startup complete");

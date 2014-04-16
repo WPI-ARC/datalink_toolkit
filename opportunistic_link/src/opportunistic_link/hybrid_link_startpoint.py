@@ -11,8 +11,8 @@ import rospy
 import threading
 import StringIO
 from std_msgs.msg import *
-from teleop_msgs.msg import *
-from teleop_msgs.srv import *
+from datalink_msgs.msg import *
+from datalink_msgs.srv import *
 import hybrid_link_startpoint
 
 class HybridLinkStartPoint:

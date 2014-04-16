@@ -9,7 +9,7 @@
 import rospy
 import math
 from std_msgs.msg import *
-from teleop_msgs.srv import *
+from datalink_msgs.srv import *
 import request_link_endpoint
 
 class SubscribeHandler:

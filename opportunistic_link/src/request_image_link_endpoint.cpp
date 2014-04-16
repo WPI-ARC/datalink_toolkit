@@ -1,9 +1,9 @@
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/Image.h>
-#include <teleop_msgs/RateControl.h>
-#include <teleop_msgs/QualityControl.h>
-#include <teleop_msgs/RequestImage.h>
+#include <datalink_msgs/RateControl.h>
+#include <datalink_msgs/QualityControl.h>
+#include <datalink_msgs/RequestImage.h>
 #include <opportunistic_link/image_compression.h>
 
 class RequestImageLinkEndpoint
@@ -36,7 +36,7 @@ public:
             repub_rate_ = ros::Rate(forward_rate_);
         }
         override_timestamps_ = override_timestamps;
-        data_client_ = nh_.serviceClient<teleop_msgs::RequestImage>(data_service);
+        data_client_ = nh_.serviceClient<datalink_msgs::RequestImage>(data_service);
         rate_server_ = nh_.advertiseService(rate_ctrl_service, &RequestImageLinkEndpoint::rate_cb, this);
         quality_server_ = nh_.advertiseService(quality_ctrl_service, &RequestImageLinkEndpoint::quality_cb, this);
         image_transport::SubscriberStatusCallback camera_image_cb = boost::bind(&RequestImageLinkEndpoint::subscriber_cb, this);
@@ -82,8 +82,8 @@ public:
 
     void get_image()
     {
-        teleop_msgs::RequestImage::Request req;
-        teleop_msgs::RequestImage::Response res;
+        datalink_msgs::RequestImage::Request req;
+        datalink_msgs::RequestImage::Response res;
         // Set the image quality for compression
         req.quality = image_quality_;
         if (data_client_.call(req, res))
@@ -117,7 +117,7 @@ public:
         }
     }
 
-    bool quality_cb(teleop_msgs::QualityControl::Request& req, teleop_msgs::QualityControl::Response& res)
+    bool quality_cb(datalink_msgs::QualityControl::Request& req, datalink_msgs::QualityControl::Response& res)
     {
         if (req.Quality >= 0 && req.Quality <= 100)
         {
@@ -133,7 +133,7 @@ public:
         return true;
     }
 
-    bool rate_cb(teleop_msgs::RateControl::Request& req, teleop_msgs::RateControl::Response& res)
+    bool rate_cb(datalink_msgs::RateControl::Request& req, datalink_msgs::RateControl::Response& res)
     {
         if (req.Rate > 0.0 && (req.Rate != INFINITY) && (req.Rate != NAN))
         {

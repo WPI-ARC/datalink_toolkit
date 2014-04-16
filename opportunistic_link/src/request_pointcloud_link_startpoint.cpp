@@ -1,9 +1,9 @@
 #include <ros/ros.h>
 #include <time.h>
-#include <teleop_msgs/RequestPointCloud2.h>
+#include <datalink_msgs/RequestPointCloud2.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <teleop_msgs/CompressedPointCloud2.h>
-#include <opportunistic_link/pointcloud_compression.h>
+#include <datalink_msgs/CompressedPointCloud2.h>
+#include <pointcloud_compression/pointcloud_compression.h>
 
 class RequestPointcloud2LinkStartpoint
 {
@@ -22,29 +22,29 @@ public:
     {
         pointcloud_sub_ = nh_.subscribe(pointcloud_topic, 1, &RequestPointcloud2LinkStartpoint::pointcloud_cb, this);
         data_server_ = nh_.advertiseService(data_service, &RequestPointcloud2LinkStartpoint::data_cb, this);
-        if (compression_type == teleop_msgs::CompressedPointCloud2::ZLIB)
+        if (compression_type == datalink_msgs::CompressedPointCloud2::ZLIB)
         {
-            compression_type_ = teleop_msgs::CompressedPointCloud2::ZLIB;
+            compression_type_ = datalink_msgs::CompressedPointCloud2::ZLIB;
             ROS_INFO("Relay using ZLIB compression");
         }
-        else if (compression_type == teleop_msgs::CompressedPointCloud2::PCL)
+        else if (compression_type == datalink_msgs::CompressedPointCloud2::PCL)
         {
-            compression_type_ = teleop_msgs::CompressedPointCloud2::PCL;
+            compression_type_ = datalink_msgs::CompressedPointCloud2::PCL;
             ROS_INFO("Relay using PCL compression");
         }
-        else if (compression_type == teleop_msgs::CompressedPointCloud2::PC30)
+        else if (compression_type == datalink_msgs::CompressedPointCloud2::PC30)
         {
-            compression_type_ = teleop_msgs::CompressedPointCloud2::PC30;
+            compression_type_ = datalink_msgs::CompressedPointCloud2::PC30;
             ROS_INFO("Relay using PC30 compression");
         }
-        else if (compression_type == teleop_msgs::CompressedPointCloud2::PC60)
+        else if (compression_type == datalink_msgs::CompressedPointCloud2::PC60)
         {
-            compression_type_ = teleop_msgs::CompressedPointCloud2::PC60;
+            compression_type_ = datalink_msgs::CompressedPointCloud2::PC60;
             ROS_INFO("Relay using PC60 compression");
         }
         else
         {
-            compression_type_ = teleop_msgs::CompressedPointCloud2::NONE;
+            compression_type_ = datalink_msgs::CompressedPointCloud2::NONE;
             ROS_WARN("Relay using NONE compression");
         }
     }
@@ -61,7 +61,7 @@ public:
         }
     }
 
-    bool data_cb(teleop_msgs::RequestPointCloud2::Request& req, teleop_msgs::RequestPointCloud2::Response& res)
+    bool data_cb(datalink_msgs::RequestPointCloud2::Request& req, datalink_msgs::RequestPointCloud2::Response& res)
     {
         if (pointclouds_.size() > 0)
         {
@@ -115,23 +115,23 @@ int main(int argc, char** argv)
     uint8_t compression_id;
     if (compression_type.compare("ZLIB") == 0)
     {
-        compression_id = teleop_msgs::CompressedPointCloud2::ZLIB;
+        compression_id = datalink_msgs::CompressedPointCloud2::ZLIB;
     }
     else if (compression_type.compare("PCL") == 0)
     {
-        compression_id = teleop_msgs::CompressedPointCloud2::PCL;
+        compression_id = datalink_msgs::CompressedPointCloud2::PCL;
     }
     else if (compression_type.compare("PC30") == 0)
     {
-        compression_id = teleop_msgs::CompressedPointCloud2::PC30;
+        compression_id = datalink_msgs::CompressedPointCloud2::PC30;
     }
     else if (compression_type.compare("PC60") == 0)
     {
-        compression_id = teleop_msgs::CompressedPointCloud2::PC60;
+        compression_id = datalink_msgs::CompressedPointCloud2::PC60;
     }
     else
     {
-        compression_id = teleop_msgs::CompressedPointCloud2::NONE;
+        compression_id = datalink_msgs::CompressedPointCloud2::NONE;
     }
     RequestPointcloud2LinkStartpoint startpoint(nh, compression_id, pointcloud_topic, data_service);
     ROS_INFO("...startup complete");

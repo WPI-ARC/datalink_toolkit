@@ -2,8 +2,8 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
-#include <teleop_msgs/LinkControl.h>
-#include <teleop_msgs/RateControl.h>
+#include <datalink_msgs/LinkControl.h>
+#include <datalink_msgs/RateControl.h>
 
 void dealocate_info_fn(sensor_msgs::CameraInfo* info)
 {
@@ -37,7 +37,7 @@ public:
         camera_base_ = camera_base;
         forward_ = false;
         link_ctrl_service_ = link_ctrl_service;
-        link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service_);
+        link_ctrl_client_ = nh_.serviceClient<datalink_msgs::LinkControl>(link_ctrl_service_);
         link_watchdog_ = nh_.createTimer(ros::Duration(10.0), &CameraLinkEndpoint::link_watchdog_cb, this, true);
         image_transport::SubscriberStatusCallback camera_image_cb = boost::bind(&CameraLinkEndpoint::image_cb, this);
         ros::SubscriberStatusCallback camera_info_cb = boost::bind(&CameraLinkEndpoint::info_cb, this);
@@ -99,8 +99,8 @@ public:
         ROS_DEBUG("%ud current subscribers [image]", camera_subs);
         if (camera_subs == 1)
         {
-            teleop_msgs::LinkControl::Request req;
-            teleop_msgs::LinkControl::Response res;
+            datalink_msgs::LinkControl::Request req;
+            datalink_msgs::LinkControl::Response res;
             req.Forward = true;
             if (link_ctrl_client_.call(req, res) && res.State)
             {
@@ -114,8 +114,8 @@ public:
         }
         else if (camera_subs < 1)
         {
-            teleop_msgs::LinkControl::Request req;
-            teleop_msgs::LinkControl::Response res;
+            datalink_msgs::LinkControl::Request req;
+            datalink_msgs::LinkControl::Response res;
             req.Forward = false;
             if (link_ctrl_client_.call(req, res) && !res.State)
             {
@@ -153,9 +153,9 @@ public:
             ROS_INFO("Attempting to reconnect");
             image_sub_ = it_.subscribe(image_topic_, 1, &CameraLinkEndpoint::image_data_cb, this);
             info_sub_ = nh_.subscribe(info_topic_, 1, &CameraLinkEndpoint::info_data_cb, this);
-            link_ctrl_client_ = nh_.serviceClient<teleop_msgs::LinkControl>(link_ctrl_service_);
-            teleop_msgs::LinkControl::Request req;
-            teleop_msgs::LinkControl::Response res;
+            link_ctrl_client_ = nh_.serviceClient<datalink_msgs::LinkControl>(link_ctrl_service_);
+            datalink_msgs::LinkControl::Request req;
+            datalink_msgs::LinkControl::Response res;
             req.Forward = forward_;
             if (link_ctrl_client_.call(req, res))
             {

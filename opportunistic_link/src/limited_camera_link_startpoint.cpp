@@ -2,8 +2,8 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
-#include <teleop_msgs/LinkControl.h>
-#include <teleop_msgs/RateControl.h>
+#include <datalink_msgs/LinkControl.h>
+#include <datalink_msgs/RateControl.h>
 
 class CameraLinkStartpoint
 {
@@ -61,7 +61,7 @@ public:
         }
     }
 
-    bool link_control_cb(teleop_msgs::LinkControl::Request& req, teleop_msgs::LinkControl::Response& res)
+    bool link_control_cb(datalink_msgs::LinkControl::Request& req, datalink_msgs::LinkControl::Response& res)
     {
         forward_ = req.Forward;
         res.State = forward_;
@@ -76,7 +76,7 @@ public:
         return true;
     }
 
-    bool rate_control_cb(teleop_msgs::RateControl::Request& req, teleop_msgs::RateControl::Response& res)
+    bool rate_control_cb(datalink_msgs::RateControl::Request& req, datalink_msgs::RateControl::Response& res)
     {
         if (req.Rate > 0.0 && (req.Rate != INFINITY) && (req.Rate != NAN))
         {
