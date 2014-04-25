@@ -2,8 +2,8 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
-#include <teleop_msgs/LinkControl.h>
-#include <teleop_msgs/RateControl.h>
+#include <datalink_msgs/LinkControl.h>
+#include <datalink_msgs/RateControl.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv/cv.h>
 #include <sensor_msgs/image_encodings.h>
