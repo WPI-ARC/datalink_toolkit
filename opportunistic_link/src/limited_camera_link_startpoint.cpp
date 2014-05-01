@@ -78,7 +78,7 @@ public:
 
     bool rate_control_cb(datalink_msgs::RateControl::Request& req, datalink_msgs::RateControl::Response& res)
     {
-        if (req.Rate > 0.0 && (req.Rate != INFINITY) && (req.Rate != NAN))
+        if (req.Rate > 0.0 && (req.Rate != INFINITY) && (isnan(req.Rate) == false))
         {
             repub_rate_ = ros::Rate(req.Rate);
             forward_rate_ = req.Rate;
