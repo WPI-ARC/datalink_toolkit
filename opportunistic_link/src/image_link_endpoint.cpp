@@ -36,10 +36,6 @@ public:
         ROS_INFO("Subscribed using %s for transport", transport_in.c_str());
     }
 
-    ~ImageLinkEndpoint()
-    {
-    }
-
     void loop()
     {
         while (ros::ok())

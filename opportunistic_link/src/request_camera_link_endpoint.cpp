@@ -44,10 +44,6 @@ public:
         camera_pub_ = it_.advertiseCamera(relay_topic, 1, camera_image_cb, camera_image_cb, camera_info_cb, camera_info_cb, ros::VoidPtr(), latched);
     }
 
-    ~RequestCameraLinkEndpoint()
-    {
-    }
-
     void loop()
     {
         while (ros::ok())

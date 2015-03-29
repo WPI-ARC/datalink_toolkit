@@ -70,10 +70,6 @@ public:
         ROS_INFO("Relay using %f voxel filter size", filter_size_);
     }
 
-    ~Pointcloud2LinkStartpoint()
-    {
-    }
-
     void loop()
     {
         while (ros::ok())

@@ -16,13 +16,7 @@ namespace image_compression
 
     public:
 
-        ImageHandler()
-        {
-        }
-
-        ~ImageHandler()
-        {
-        }
+        ImageHandler() {}
 
         void reset_encoder();
 

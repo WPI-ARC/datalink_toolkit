@@ -44,17 +44,9 @@ namespace pointcloud_compression
             uncompressed_cloud_ptr_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>());
         }
 
-        ~PointCloudHandler()
-        {
-        }
-
         void reset_encoder();
 
         void reset_decoder();
-
-        std::vector<uint8_t> decompress_bytes(std::vector<uint8_t>& compressed);
-
-        std::vector<uint8_t> compress_bytes(std::vector<uint8_t>& uncompressed);
 
         sensor_msgs::PointCloud2 decompress_pointcloud2(datalink_msgs::CompressedPointCloud2& compressed);
 

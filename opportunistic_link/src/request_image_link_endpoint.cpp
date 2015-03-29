@@ -43,10 +43,6 @@ public:
         image_pub_ = it_.advertise(relay_topic, 1, camera_image_cb, camera_image_cb, ros::VoidPtr(), latched);
     }
 
-    ~RequestImageLinkEndpoint()
-    {
-    }
-
     void loop()
     {
         while (ros::ok())

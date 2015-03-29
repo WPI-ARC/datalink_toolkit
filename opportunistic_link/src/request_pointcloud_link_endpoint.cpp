@@ -43,10 +43,6 @@ public:
         pointcloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(relay_topic, 1, pointcloud_sub_cb, pointcloud_sub_cb, ros::VoidPtr(), latched);
     }
 
-    ~RequestPointcloud2LinkEndpoint()
-    {
-    }
-
     void loop()
     {
         while (ros::ok())

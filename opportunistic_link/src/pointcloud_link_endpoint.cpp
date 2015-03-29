@@ -37,10 +37,6 @@ public:
         compressed_sub_ = nh_.subscribe(link_topic_, 1, &Pointcloud2LinkEndpoint::pointcloud_data_cb, this);
     }
 
-    ~Pointcloud2LinkEndpoint()
-    {
-    }
-
     void loop()
     {
         while (ros::ok())

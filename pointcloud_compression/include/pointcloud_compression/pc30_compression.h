@@ -38,10 +38,6 @@ namespace pc30_compression
             pframe_counter_ = 0;
         }
 
-        ~PC30Compressor()
-        {
-        }
-
         void reset_encoder();
 
         void reset_decoder();
@@ -49,10 +45,6 @@ namespace pc30_compression
         FRAME_TYPES header_to_frame_type(uint32_t header_block);
 
         uint32_t frame_type_to_header(FRAME_TYPES frame_type);
-
-        std::vector<uint8_t> decompress_bytes(std::vector<uint8_t>& compressed);
-
-        std::vector<uint8_t> compress_bytes(std::vector<uint8_t>& uncompressed);
 
         sensor_msgs::PointCloud2 decode_pointcloud2(datalink_msgs::CompressedPointCloud2& compressed);
 

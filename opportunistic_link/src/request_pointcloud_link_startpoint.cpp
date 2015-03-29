@@ -49,10 +49,6 @@ public:
         }
     }
 
-    ~RequestPointcloud2LinkStartpoint()
-    {
-    }
-
     void loop()
     {
         while (ros::ok())
