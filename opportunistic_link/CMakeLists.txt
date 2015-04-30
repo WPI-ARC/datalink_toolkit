@@ -131,7 +131,7 @@ target_link_libraries(pointcloud_link_endpoint ${catkin_LIBRARIES} rt)
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 install(PROGRAMS
-  src/opportunistic_link/hybid_link_startpoint.py
+  src/opportunistic_link/hybrid_link_startpoint.py
   src/opportunistic_link/limited_link_startpoint.py
   src/opportunistic_link/link_startpoint.py
   src/opportunistic_link/link_endpoint.py
