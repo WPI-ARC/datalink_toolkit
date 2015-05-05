@@ -141,11 +141,27 @@ install(PROGRAMS
 )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS opportunistic_link opportunistic_link_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS 
+	image_compression
+	image_resizer
+	camera_resizer
+	request_image_link_startpoint
+	request_image_link_endpoint
+	limited_image_link_startpoint
+	image_link_endpoint
+	request_camera_link_startpoint
+	request_camera_link_endpoint
+	limited_camera_link_startpoint
+	camera_link_endpoint
+	request_pointcloud_link_startpoint
+	request_pointcloud_link_endpoint
+	limited_pointcloud_link_startpoint
+	pointcloud_link_endpoint
+
+  #ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
