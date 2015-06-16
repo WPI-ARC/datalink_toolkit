@@ -5,11 +5,14 @@
 #include <datalink_msgs/CompressedPointCloud2.h>
 #include <pointcloud_compression/pointcloud_compression.h>
 
+#define DEFAULT_LOOP_RATE 128.0
+
 class RequestPointcloud2LinkStartpoint
 {
 protected:
 
     ros::NodeHandle nh_;
+    ros::Rate loop_rate_;
     uint8_t compression_type_;
     ros::Subscriber pointcloud_sub_;
     ros::ServiceServer data_server_;
@@ -18,8 +21,16 @@ protected:
 
 public:
 
-    RequestPointcloud2LinkStartpoint(ros::NodeHandle &n, uint8_t compression_type, std::string pointcloud_topic, std::string data_service) : nh_(n)
+    RequestPointcloud2LinkStartpoint(ros::NodeHandle &n, uint8_t compression_type, std::string pointcloud_topic, std::string data_service, const double loop_rate) : nh_(n), loop_rate_(DEFAULT_LOOP_RATE)
     {
+        if ((loop_rate != INFINITY) && (loop_rate > 0.0) && (isnan(loop_rate) == false))
+        {
+            loop_rate_ = ros::Rate(loop_rate);
+        }
+        else
+        {
+            ROS_ERROR("Invalid loop rate %f, setting to default %f", loop_rate, DEFAULT_LOOP_RATE);
+        }
         pointcloud_sub_ = nh_.subscribe(pointcloud_topic, 1, &RequestPointcloud2LinkStartpoint::pointcloud_cb, this);
         data_server_ = nh_.advertiseService(data_service, &RequestPointcloud2LinkStartpoint::data_cb, this);
         if (compression_type == datalink_msgs::CompressedPointCloud2::ZLIB)
@@ -53,6 +64,7 @@ public:
     {
         while (ros::ok())
         {
+            loop_rate_.sleep();
             ros::spinOnce();
         }
     }
@@ -105,9 +117,11 @@ int main(int argc, char** argv)
     std::string pointcloud_topic;
     std::string compression_type;
     std::string data_service;
+    double loop_rate = DEFAULT_LOOP_RATE;
     nhp.param(std::string("pointcloud_topic"), pointcloud_topic, std::string("camera/depth/points_xyzrgb"));
     nhp.param(std::string("compression_type"), compression_type, std::string("ZLIB"));
     nhp.param(std::string("data_service"), data_service, std::string("camera/depth/data"));
+    nhp.param(std::string("loop_rate"), loop_rate, DEFAULT_LOOP_RATE);
     uint8_t compression_id;
     if (compression_type.compare("ZLIB") == 0)
     {
@@ -129,7 +143,7 @@ int main(int argc, char** argv)
     {
         compression_id = datalink_msgs::CompressedPointCloud2::NONE;
     }
-    RequestPointcloud2LinkStartpoint startpoint(nh, compression_id, pointcloud_topic, data_service);
+    RequestPointcloud2LinkStartpoint startpoint(nh, compression_id, pointcloud_topic, data_service, loop_rate);
     ROS_INFO("...startup complete");
     startpoint.loop();
     return 0;

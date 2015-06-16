@@ -6,11 +6,14 @@
 #include <datalink_msgs/CompressedPointCloud2.h>
 #include <pointcloud_compression/pointcloud_compression.h>
 
+#define DEFAULT_LOOP_RATE 128.0
+
 class Pointcloud2LinkEndpoint
 {
 protected:
 
     ros::NodeHandle nh_;
+    ros::Rate loop_rate_;
     bool forward_;
     bool override_timestamps_;
     ros::Publisher pointcloud_pub_;
@@ -24,8 +27,16 @@ protected:
 
 public:
 
-    Pointcloud2LinkEndpoint(ros::NodeHandle &n, std::string relay_topic, std::string link_topic, std::string link_ctrl_service, bool override_timestamps, bool latched) : nh_(n)
+    Pointcloud2LinkEndpoint(ros::NodeHandle &n, std::string relay_topic, std::string link_topic, std::string link_ctrl_service, bool override_timestamps, const double loop_rate, bool latched) : nh_(n), loop_rate_(DEFAULT_LOOP_RATE)
     {
+        if ((loop_rate != INFINITY) && (loop_rate > 0.0) && (isnan(loop_rate) == false))
+        {
+            loop_rate_ = ros::Rate(loop_rate);
+        }
+        else
+        {
+            ROS_ERROR("Invalid loop rate %f, setting to default %f", loop_rate, DEFAULT_LOOP_RATE);
+        }
         forward_ = false;
         override_timestamps_ = override_timestamps;
         link_topic_ = link_topic;
@@ -41,6 +52,7 @@ public:
     {
         while (ros::ok())
         {
+            loop_rate_.sleep();
             ros::spinOnce();
         }
     }
@@ -153,14 +165,16 @@ int main(int argc, char** argv)
     std::string relay_topic;
     std::string link_topic;
     std::string link_ctrl_service;
+    double loop_rate = DEFAULT_LOOP_RATE;
     bool latched;
     bool override_timestamps;
     nhp.param(std::string("relay_topic"), relay_topic, std::string("relay/camera/depth/points_xyzrgb"));
     nhp.param(std::string("link_topic"), link_topic, std::string("link/camera/depth/compressed"));
     nhp.param(std::string("link_ctrl"), link_ctrl_service, std::string("camera/depth/ctrl"));
+    nhp.param(std::string("loop_rate"), loop_rate, DEFAULT_LOOP_RATE);
     nhp.param(std::string("latched"), latched, false);
     nhp.param(std::string("override_timestamps"), override_timestamps, true);
-    Pointcloud2LinkEndpoint endpoint(nh, relay_topic, link_topic, link_ctrl_service, override_timestamps, latched);
+    Pointcloud2LinkEndpoint endpoint(nh, relay_topic, link_topic, link_ctrl_service, override_timestamps, loop_rate, latched);
     ROS_INFO("...startup complete");
     endpoint.loop();
     return 0;

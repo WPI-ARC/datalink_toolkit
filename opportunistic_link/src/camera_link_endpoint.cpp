@@ -5,6 +5,8 @@
 #include <datalink_msgs/LinkControl.h>
 #include <datalink_msgs/RateControl.h>
 
+#define DEFAULT_LOOP_RATE 128.0
+
 void dealocate_info_fn(sensor_msgs::CameraInfo* info)
 {
 }
@@ -15,6 +17,7 @@ protected:
 
     ros::NodeHandle nh_;
     image_transport::ImageTransport it_;
+    ros::Rate loop_rate_;
     image_transport::Subscriber image_sub_;
     ros::Subscriber info_sub_;
     image_transport::CameraPublisher camera_pub_;
@@ -30,8 +33,16 @@ protected:
 
 public:
 
-    CameraLinkEndpoint(ros::NodeHandle &n, std::string image_topic, std::string info_topic, std::string camera_base, std::string link_ctrl_service, bool latched) : nh_(n), it_(n)
+    CameraLinkEndpoint(ros::NodeHandle &n, std::string image_topic, std::string info_topic, std::string camera_base, std::string link_ctrl_service, const double loop_rate, bool latched) : nh_(n), it_(n), loop_rate_(DEFAULT_LOOP_RATE)
     {
+        if ((loop_rate != INFINITY) && (loop_rate > 0.0) && (isnan(loop_rate) == false))
+        {
+            loop_rate_ = ros::Rate(loop_rate);
+        }
+        else
+        {
+            ROS_ERROR("Invalid loop rate %f, setting to default %f", loop_rate, DEFAULT_LOOP_RATE);
+        }
         image_topic_ = image_topic;
         info_topic_ = info_topic;
         camera_base_ = camera_base;
@@ -52,6 +63,7 @@ public:
     {
         while (ros::ok())
         {
+            loop_rate_.sleep();
             ros::spinOnce();
         }
     }
@@ -181,15 +193,16 @@ int main(int argc, char** argv)
     std::string info_topic;
     std::string camera_base_topic;
     std::string link_ctrl_service;
-    bool latched;
+    double loop_rate = DEFAULT_LOOP_RATE;
+    bool latched = false;
     nhp.param(std::string("link_image_topic"), image_topic, std::string("link/camera/rgb/image"));
     nhp.param(std::string("link_info_topic"), info_topic, std::string("link/camera/rgb/camera_info"));
     nhp.param(std::string("relay_base_topic"), camera_base_topic, std::string("relay/camera/rgb/image"));
     nhp.param(std::string("link_ctrl"), link_ctrl_service, std::string("camera/rgb/ctrl"));
+    nhp.param(std::string("loop_rate"), loop_rate, DEFAULT_LOOP_RATE);
     nhp.param(std::string("latched"), latched, false);
-    CameraLinkEndpoint endpoint(nh, image_topic, info_topic, camera_base_topic, link_ctrl_service, latched);
+    CameraLinkEndpoint endpoint(nh, image_topic, info_topic, camera_base_topic, link_ctrl_service, loop_rate, latched);
     ROS_INFO("...startup complete");
     endpoint.loop();
     return 0;
 }
-

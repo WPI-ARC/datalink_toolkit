@@ -8,12 +8,15 @@
 #include <opencv/cv.h>
 #include <sensor_msgs/image_encodings.h>
 
+#define DEFAULT_LOOP_RATE 128.0
+
 class CameraResizer
 {
 protected:
 
     ros::NodeHandle nh_;
     image_transport::ImageTransport it_;
+    ros::Rate loop_rate_;
     int resized_width_;
     int resized_height_;
     bool convert_to_bw_;
@@ -22,8 +25,16 @@ protected:
 
 public:
 
-    CameraResizer(ros::NodeHandle &n, std::string camera_base_topic, std::string resized_base_topic, int resized_width, int resized_height, bool convert_to_bw) : nh_(n), it_(n)
+    CameraResizer(ros::NodeHandle &n, std::string camera_base_topic, std::string resized_base_topic, int resized_width, int resized_height, bool convert_to_bw, const double loop_rate) : nh_(n), it_(n), loop_rate_(DEFAULT_LOOP_RATE)
     {
+        if ((loop_rate != INFINITY) && (loop_rate > 0.0) && (isnan(loop_rate) == false))
+        {
+            loop_rate_ = ros::Rate(loop_rate);
+        }
+        else
+        {
+            ROS_ERROR("Invalid loop rate %f, setting to default %f", loop_rate, DEFAULT_LOOP_RATE);
+        }
         resized_width_ = resized_width;
         resized_height_ = resized_height;
         convert_to_bw_ = convert_to_bw;
@@ -39,6 +50,7 @@ public:
     {
         while (ros::ok())
         {
+            loop_rate_.sleep();
             ros::spinOnce();
         }
     }
@@ -141,12 +153,14 @@ int main(int argc, char** argv)
     int resized_width;
     int resized_height;
     bool convert_to_bw;
+    double loop_rate = DEFAULT_LOOP_RATE;
     nhp.param(std::string("camera_base_topic"), camera_base_topic, std::string("camera/rgb/image"));
     nhp.param(std::string("resized_base_topic"), resized_base_topic, std::string("camera/resized/rgb/image"));
     nhp.param(std::string("resized_width"), resized_width, 160);
     nhp.param(std::string("resized_height"), resized_height, 120);
     nhp.param(std::string("convert_to_bw"), convert_to_bw, false);
-    CameraResizer resizer(nh, camera_base_topic, resized_base_topic, resized_width, resized_height, convert_to_bw);
+    nhp.param(std::string("loop_rate"), loop_rate, DEFAULT_LOOP_RATE);
+    CameraResizer resizer(nh, camera_base_topic, resized_base_topic, resized_width, resized_height, convert_to_bw, loop_rate);
     ROS_INFO("...startup complete");
     resizer.loop();
     return 0;

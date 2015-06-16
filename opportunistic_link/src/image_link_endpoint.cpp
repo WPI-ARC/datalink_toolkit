@@ -5,12 +5,15 @@
 #include <datalink_msgs/LinkControl.h>
 #include <datalink_msgs/RateControl.h>
 
+#define DEFAULT_LOOP_RATE 128.0
+
 class ImageLinkEndpoint
 {
 protected:
 
     ros::NodeHandle nh_;
     image_transport::ImageTransport it_;
+    ros::Rate loop_rate_;
     bool forward_;
     image_transport::Subscriber image_sub_;
     image_transport::Publisher image_pub_;
@@ -22,8 +25,16 @@ protected:
 
 public:
 
-    ImageLinkEndpoint(ros::NodeHandle &n, std::string relay_topic, std::string link_topic, std::string link_ctrl_service, bool latched) : nh_(n), it_(n)
+    ImageLinkEndpoint(ros::NodeHandle &n, std::string relay_topic, std::string link_topic, std::string link_ctrl_service, const double loop_rate, bool latched) : nh_(n), it_(n), loop_rate_(DEFAULT_LOOP_RATE)
     {
+        if ((loop_rate != INFINITY) && (loop_rate > 0.0) && (isnan(loop_rate) == false))
+        {
+            loop_rate_ = ros::Rate(loop_rate);
+        }
+        else
+        {
+            ROS_ERROR("Invalid loop rate %f, setting to default %f", loop_rate, DEFAULT_LOOP_RATE);
+        }
         forward_ = false;
         link_topic_ = link_topic;
         link_ctrl_service_ = link_ctrl_service;
@@ -40,6 +51,7 @@ public:
     {
         while (ros::ok())
         {
+            loop_rate_.sleep();
             ros::spinOnce();
         }
     }
@@ -133,12 +145,14 @@ int main(int argc, char** argv)
     std::string relay_topic;
     std::string link_topic;
     std::string link_ctrl_service;
+    double loop_rate = DEFAULT_LOOP_RATE;
     bool latched;
     nhp.param(std::string("relay_topic"), relay_topic, std::string("relay/camera/image"));
     nhp.param(std::string("link_topic"), link_topic, std::string("link/camera/image"));
     nhp.param(std::string("link_ctrl"), link_ctrl_service, std::string("camera/ctrl"));
+    nhp.param(std::string("loop_rate"), loop_rate, DEFAULT_LOOP_RATE);
     nhp.param(std::string("latched"), latched, false);
-    ImageLinkEndpoint endpoint(nh, relay_topic, link_topic, link_ctrl_service, latched);
+    ImageLinkEndpoint endpoint(nh, relay_topic, link_topic, link_ctrl_service, loop_rate, latched);
     ROS_INFO("...startup complete");
     endpoint.loop();
     return 0;
