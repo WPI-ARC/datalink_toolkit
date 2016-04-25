@@ -22,9 +22,9 @@ namespace image_compression
 
         void reset_decoder();
 
-        sensor_msgs::Image decompress_image(sensor_msgs::CompressedImage& compressed, std::string encoding);
+        sensor_msgs::Image decompress_image(const sensor_msgs::CompressedImage& compressed, const std::string& encoding);
 
-        sensor_msgs::CompressedImage compress_image(const sensor_msgs::Image& image, int quality);
+        sensor_msgs::CompressedImage compress_image(const sensor_msgs::Image& image, const int quality);
 
     };
 }

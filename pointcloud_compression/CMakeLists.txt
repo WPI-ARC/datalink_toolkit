@@ -44,12 +44,19 @@ catkin_package(INCLUDE_DIRS include LIBRARIES ${PROJECT_NAME} CATKIN_DEPENDS ros
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+include_directories(include SYSTEM ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 
-set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -O3")
+set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -Wconversion -Werror")
 
 ## Declare a cpp library
-add_library(${PROJECT_NAME} src/pointcloud_compression.cpp src/pc30_compression.cpp src/pc60_compression.cpp)
+add_library(${PROJECT_NAME}
+            include/${PROJECT_NAME}/zlib_helpers.hpp
+            include/${PROJECT_NAME}/pc30_compression.h
+            include/${PROJECT_NAME}/pc60_compression.h
+            include/${PROJECT_NAME}/pointcloud_compression.h
+            src/${PROJECT_NAME}/pc30_compression.cpp
+            src/${PROJECT_NAME}/pc60_compression.cpp
+            src/${PROJECT_NAME}/pointcloud_compression.cpp)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${PCL_LIBRARIES} z)
 

@@ -29,7 +29,7 @@ void PointCloudHandler::reset_decoder()
     pc60_decoder_.reset_decoder();
 }
 
-sensor_msgs::PointCloud2 PointCloudHandler::decompress_pointcloud2(datalink_msgs::CompressedPointCloud2& compressed)
+sensor_msgs::PointCloud2 PointCloudHandler::decompress_pointcloud2(const datalink_msgs::CompressedPointCloud2& compressed)
 {
     sensor_msgs::PointCloud2 cloud;
     cloud.header.stamp = compressed.header.stamp;
@@ -92,7 +92,7 @@ sensor_msgs::PointCloud2 PointCloudHandler::decompress_pointcloud2(datalink_msgs
     return cloud;
 }
 
-datalink_msgs::CompressedPointCloud2 PointCloudHandler::compress_pointcloud2(sensor_msgs::PointCloud2& cloud, uint8_t compression_type, float filter_size)
+datalink_msgs::CompressedPointCloud2 PointCloudHandler::compress_pointcloud2(const sensor_msgs::PointCloud2& cloud, const uint8_t compression_type, const float filter_size)
 {
     sensor_msgs::PointCloud2 intermediate;
     if (filter_size > 0.0)
@@ -102,7 +102,7 @@ datalink_msgs::CompressedPointCloud2 PointCloudHandler::compress_pointcloud2(sen
         pcl::PCLPointCloud2 pcl_intermediate;
         pcl_conversions::toPCL(cloud, pcl_cloud);
         // Voxel filter the cloud
-        pcl::PCLPointCloud2ConstPtr pcl_cloud_ptr(&pcl_cloud);
+        pcl::PCLPointCloud2ConstPtr pcl_cloud_ptr(&pcl_cloud, dealocate_pcl_pointcloud2_fn);
         voxel_filter_.setInputCloud(pcl_cloud_ptr);
         voxel_filter_.setLeafSize(filter_size, filter_size, filter_size);
         voxel_filter_.filter(pcl_intermediate);
@@ -118,7 +118,7 @@ datalink_msgs::CompressedPointCloud2 PointCloudHandler::compress_pointcloud2(sen
     return compressed;
 }
 
-datalink_msgs::CompressedPointCloud2 PointCloudHandler::compress_pointcloud2(sensor_msgs::PointCloud2& cloud, uint8_t compression_type)
+datalink_msgs::CompressedPointCloud2 PointCloudHandler::compress_pointcloud2(const sensor_msgs::PointCloud2& cloud, const uint8_t compression_type)
 {
     datalink_msgs::CompressedPointCloud2 compressed_cloud;
     compressed_cloud.header.stamp = cloud.header.stamp;

@@ -44,14 +44,14 @@ catkin_package(CATKIN_DEPENDS rospy std_msgs sensor_msgs datalink_msgs image_tra
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+include_directories(include SYSTEM ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -Wconversion -Werror")
 
 ## Declare a cpp library
 
 # Image compression library
-add_library(image_compression SHARED src/image_compression.cpp)
+add_library(image_compression SHARED include/${PROJECT_NAME}/image_compression.h src/${PROJECT_NAME}/image_compression.cpp)
 add_dependencies(image_compression ${catkin_EXPORTED_TARGETS})
 target_link_libraries(image_compression ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} z)
 
@@ -141,22 +141,22 @@ install(PROGRAMS
 )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS 
-	image_compression
-	image_resizer
-	camera_resizer
-	request_image_link_startpoint
-	request_image_link_endpoint
-	limited_image_link_startpoint
-	image_link_endpoint
-	request_camera_link_startpoint
-	request_camera_link_endpoint
-	limited_camera_link_startpoint
-	camera_link_endpoint
-	request_pointcloud_link_startpoint
-	request_pointcloud_link_endpoint
-	limited_pointcloud_link_startpoint
-	pointcloud_link_endpoint
+install(TARGETS
+    image_compression
+    image_resizer
+    camera_resizer
+    request_image_link_startpoint
+    request_image_link_endpoint
+    limited_image_link_startpoint
+    image_link_endpoint
+    request_camera_link_startpoint
+    request_camera_link_endpoint
+    limited_camera_link_startpoint
+    camera_link_endpoint
+    request_pointcloud_link_startpoint
+    request_pointcloud_link_endpoint
+    limited_pointcloud_link_startpoint
+    pointcloud_link_endpoint
 
   #ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

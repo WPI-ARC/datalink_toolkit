@@ -100,6 +100,7 @@ public:
 
     void link_watchdog_cb(const ros::TimerEvent &e)
     {
+        (void)(e);
         try
         {
             image_sub_.shutdown();

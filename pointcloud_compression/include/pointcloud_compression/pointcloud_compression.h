@@ -16,13 +16,11 @@
 
 namespace pointcloud_compression
 {
-    void dealocate_pcl_pointcloud_fn(pcl::PointCloud<pcl::PointXYZRGB>* p)
-    {
-    }
+    void dealocate_pcl_pointcloud_fn(pcl::PointCloud<pcl::PointXYZRGB>* p) {(void)(p);}
 
-    void dealocate_sensor_messages_pointcloud2_fn(sensor_msgs::PointCloud2* p)
-    {
-    }
+    void dealocate_pcl_pointcloud2_fn(pcl::PCLPointCloud2* p) {(void)(p);}
+
+    void dealocate_sensor_messages_pointcloud2_fn(sensor_msgs::PointCloud2* p) {(void)(p);}
 
     class PointCloudHandler
     {
@@ -48,11 +46,11 @@ namespace pointcloud_compression
 
         void reset_decoder();
 
-        sensor_msgs::PointCloud2 decompress_pointcloud2(datalink_msgs::CompressedPointCloud2& compressed);
+        sensor_msgs::PointCloud2 decompress_pointcloud2(const datalink_msgs::CompressedPointCloud2& compressed);
 
-        datalink_msgs::CompressedPointCloud2 compress_pointcloud2(sensor_msgs::PointCloud2& cloud, uint8_t compression_type, float filter_size);
+        datalink_msgs::CompressedPointCloud2 compress_pointcloud2(const sensor_msgs::PointCloud2& cloud, const uint8_t compression_type, const float filter_size);
 
-        datalink_msgs::CompressedPointCloud2 compress_pointcloud2(sensor_msgs::PointCloud2& cloud, uint8_t compression_type);
+        datalink_msgs::CompressedPointCloud2 compress_pointcloud2(const sensor_msgs::PointCloud2& cloud, const uint8_t compression_type);
 
     };
 }

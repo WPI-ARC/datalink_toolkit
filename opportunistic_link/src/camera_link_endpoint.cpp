@@ -7,9 +7,7 @@
 
 #define DEFAULT_LOOP_RATE 128.0
 
-void dealocate_info_fn(sensor_msgs::CameraInfo* info)
-{
-}
+void dealocate_info_fn(sensor_msgs::CameraInfo* info) {(void)(info);}
 
 class CameraLinkEndpoint
 {
@@ -145,6 +143,7 @@ public:
 
     void link_watchdog_cb(const ros::TimerEvent &e)
     {
+        (void)(e);
         try
         {
             image_sub_.shutdown();

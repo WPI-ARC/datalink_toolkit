@@ -21,8 +21,8 @@ namespace pc30_compression
         std::map<uint32_t, int8_t> stored_state_;
         uint32_t iframe_rate_;
         uint32_t pframe_counter_;
-        pcl::PointCloud<pcl::PointXYZ> get_current_pointcloud();
-        pcl::PointCloud<pcl::PointXYZ> generate_empty_pointcloud();
+        pcl::PointCloud<pcl::PointXYZ> get_current_pointcloud() const;
+        pcl::PointCloud<pcl::PointXYZ> generate_empty_pointcloud() const;
 
     public:
 
@@ -32,23 +32,23 @@ namespace pc30_compression
         static const uint32_t PFRAME_ID = 0x00dfdfdf;
         static const uint32_t UNKNOWN_ID = 0x00000000;
 
-        PC30Compressor()
+        PC30Compressor(const uint32_t iframe_rate=10u)
         {
-            iframe_rate_ = IFRAME_RATE;
-            pframe_counter_ = 0;
+            iframe_rate_ = iframe_rate;
+            pframe_counter_ = 0u;
         }
 
         void reset_encoder();
 
         void reset_decoder();
 
-        FRAME_TYPES header_to_frame_type(uint32_t header_block);
+        FRAME_TYPES header_to_frame_type(const uint32_t header_block) const;
 
-        uint32_t frame_type_to_header(FRAME_TYPES frame_type);
+        uint32_t frame_type_to_header(const FRAME_TYPES frame_type) const;
 
-        sensor_msgs::PointCloud2 decode_pointcloud2(datalink_msgs::CompressedPointCloud2& compressed);
+        sensor_msgs::PointCloud2 decode_pointcloud2(const datalink_msgs::CompressedPointCloud2& compressed);
 
-        datalink_msgs::CompressedPointCloud2 encode_pointcloud2(sensor_msgs::PointCloud2& cloud);
+        datalink_msgs::CompressedPointCloud2 encode_pointcloud2(const sensor_msgs::PointCloud2& cloud);
 
     };
 }

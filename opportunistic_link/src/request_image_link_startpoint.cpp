@@ -62,9 +62,9 @@ public:
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &st);
             res.image = compressor_.compress_image(*last_image_, req.quality);
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &et);
-            float secs = (float)(et.tv_sec - st.tv_sec);
-            secs = secs + (float)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
-            float ratio = ((float)res.image.data.size() / (float)last_image_->data.size()) * 100.0;
+            double secs = (double)(et.tv_sec - st.tv_sec);
+            secs = secs + (double)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
+            double ratio = ((double)res.image.data.size() / (double)last_image_->data.size()) * 100.0;
             ROS_DEBUG("Compression of %f %% took %f seconds", ratio, secs);
             ROS_DEBUG("Original size: %f KB - Compressed size: %f KB", ((float)last_image_->data.size() / 1000.0), ((float)res.image.data.size() / 1000.0));
             // Clear the cache

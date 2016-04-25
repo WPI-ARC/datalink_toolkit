@@ -25,7 +25,7 @@ void PC60Compressor::reset_decoder()
     state_packed_.clear();
 }
 
-PC60Compressor::FRAME_TYPES PC60Compressor::header_to_frame_type(u_int32_t header_block)
+PC60Compressor::FRAME_TYPES PC60Compressor::header_to_frame_type(const uint32_t header_block) const
 {
     if (header_block == PC60Compressor::IFRAME_ID)
     {
@@ -41,7 +41,7 @@ PC60Compressor::FRAME_TYPES PC60Compressor::header_to_frame_type(u_int32_t heade
     }
 }
 
-uint32_t PC60Compressor::frame_type_to_header(PC60Compressor::FRAME_TYPES frame_type)
+uint32_t PC60Compressor::frame_type_to_header(const PC60Compressor::FRAME_TYPES frame_type) const
 {
     if (frame_type == PC60Compressor::IFRAME)
     {
@@ -57,7 +57,7 @@ uint32_t PC60Compressor::frame_type_to_header(PC60Compressor::FRAME_TYPES frame_
     }
 }
 
-sensor_msgs::PointCloud2 PC60Compressor::decode_pointcloud2(datalink_msgs::CompressedPointCloud2& compressed)
+sensor_msgs::PointCloud2 PC60Compressor::decode_pointcloud2(const datalink_msgs::CompressedPointCloud2& compressed)
 {
     std::vector<uint8_t> decompressed_encoded_data = ZlibHelpers::DecompressBytes(compressed.compressed_data);
     // Check if the encoded data is too short to contain a header
@@ -106,11 +106,11 @@ sensor_msgs::PointCloud2 PC60Compressor::decode_pointcloud2(datalink_msgs::Compr
             ROS_INFO("Start I-FRAME decode");
             stored_state_.clear();
             // Extract uint32_t data
-            std::vector<u_int64_t> encoded_cloud_data;
+            std::vector<uint64_t> encoded_cloud_data;
             encoded_cloud_data.resize((decompressed_encoded_data.size() - 4) / 8);
             for (size_t eidx = 0, didx = 4; eidx < encoded_cloud_data.size(); eidx++, didx+=8)
             {
-                u_int64_t extracted_point = 0;
+                uint64_t extracted_point = 0;
                 extracted_point = extracted_point | decompressed_encoded_data[didx + 7];
                 extracted_point = extracted_point << 8;
                 extracted_point = extracted_point | decompressed_encoded_data[didx + 6];
@@ -182,7 +182,7 @@ sensor_msgs::PointCloud2 PC60Compressor::decode_pointcloud2(datalink_msgs::Compr
                 // Add and remove points from the stored state
                 for (size_t didx = 8; didx < decompressed_encoded_data.size(); didx+=8)
                 {
-                    u_int64_t extracted_point = 0;
+                    uint64_t extracted_point = 0;
                     extracted_point = extracted_point | decompressed_encoded_data[didx + 7];
                     extracted_point = extracted_point << 8;
                     extracted_point = extracted_point | decompressed_encoded_data[didx + 6];
@@ -198,17 +198,17 @@ sensor_msgs::PointCloud2 PC60Compressor::decode_pointcloud2(datalink_msgs::Compr
                     extracted_point = extracted_point | decompressed_encoded_data[didx + 1];
                     extracted_point = extracted_point << 8;
                     extracted_point = extracted_point | decompressed_encoded_data[didx + 0];
-                    u_int64_t control_flag = extracted_point & 0xf000000000000000;
+                    uint64_t control_flag = extracted_point & 0xf000000000000000;
                     // If control flag is 0xa..., we are adding a new point to the stored state
                     if (control_flag == 0xa000000000000000)
                     {
-                        u_int64_t real_point = extracted_point & 0x0fffffffffffffff;
+                        uint64_t real_point = extracted_point & 0x0fffffffffffffff;
                         stored_state_[real_point] = 1;
                     }
                     // If control flag is 0xd..., we are removing the point from the stored state
                     else if (control_flag == 0xd000000000000000)
                     {
-                        u_int64_t real_point = extracted_point & 0x0fffffffffffffff;
+                        uint64_t real_point = extracted_point & 0x0fffffffffffffff;
                         stored_state_.erase(real_point);
                     }
                     else
@@ -217,12 +217,12 @@ sensor_msgs::PointCloud2 PC60Compressor::decode_pointcloud2(datalink_msgs::Compr
                     }
                 }
                 // Build the final destination
-                std::vector<u_int64_t> recovered_cloud_data;
-                std::map<u_int64_t, int8_t>::iterator itr;
+                std::vector<uint64_t> recovered_cloud_data;
+                std::map<uint64_t, int8_t>::iterator itr;
                 // Loop through the stored state to generate the vector of points
                 for (itr = stored_state_.begin(); itr != stored_state_.end(); ++itr)
                 {
-                    u_int64_t point = itr->first;
+                    uint64_t point = itr->first;
                     int8_t ctrl = itr->second;
                     // Make sure this is a valid entry
                     if (ctrl > 0)
@@ -254,7 +254,7 @@ sensor_msgs::PointCloud2 PC60Compressor::decode_pointcloud2(datalink_msgs::Compr
     }
 }
 
-pcl::PointCloud<pcl::PointXYZ> PC60Compressor::generate_empty_pointcloud()
+pcl::PointCloud<pcl::PointXYZ> PC60Compressor::generate_empty_pointcloud() const
 {
     pcl::PointCloud<pcl::PointXYZ> empty_pointcloud;
     pcl::PointXYZ dummy_point(0.0, 0.0, 0.0);
@@ -262,12 +262,12 @@ pcl::PointCloud<pcl::PointXYZ> PC60Compressor::generate_empty_pointcloud()
     return empty_pointcloud;
 }
 
-pcl::PointCloud<pcl::PointXYZ> PC60Compressor::get_current_pointcloud()
+pcl::PointCloud<pcl::PointXYZ> PC60Compressor::get_current_pointcloud() const
 {
     pcl::PointCloud<pcl::PointXYZ> current_pointcloud;
     for (size_t tidx = 0; tidx < state_packed_.size(); tidx++)
     {
-        u_int64_t current_point = state_packed_[tidx];
+        uint64_t current_point = state_packed_[tidx];
         // Get X,Y,Z integer values
         uint32_t z_cm = current_point & 0x00000000000fffff;
         current_point = current_point >> 20;
@@ -279,9 +279,9 @@ pcl::PointCloud<pcl::PointXYZ> PC60Compressor::get_current_pointcloud()
         float y_m = (float)y_cm / precision_;
         float z_m = (float)z_cm / precision_;
         // Transform back to the original frame
-        float x = x_m - 500.0;
-        float y = y_m - 500.0;
-        float z = z_m - 500.0;
+        float x = x_m - 500.0f;
+        float y = y_m - 500.0f;
+        float z = z_m - 500.0f;
         // Turn into a PCL point
         pcl::PointXYZ new_point(x, y, z);
         current_pointcloud.push_back(new_point);
@@ -289,13 +289,13 @@ pcl::PointCloud<pcl::PointXYZ> PC60Compressor::get_current_pointcloud()
     return current_pointcloud;
 }
 
-datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(sensor_msgs::PointCloud2& cloud)
+datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(const sensor_msgs::PointCloud2& cloud)
 {
     // First, we convert the entire pointcloud to PC60 encoding
     pcl::PointCloud<pcl::PointXYZ> pcl_cloud;
     pcl::fromROSMsg(cloud, pcl_cloud);
-    std::vector<u_int64_t> twentybit_positions;
-    std::map<u_int64_t, int8_t> new_state;
+    std::vector<uint64_t> twentybit_positions;
+    std::map<uint64_t, int8_t> new_state;
     for (size_t idx = 0; idx < pcl_cloud.size(); idx++)
     {
         pcl::PointXYZ& current_point = pcl_cloud.at(idx);
@@ -313,9 +313,9 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(sensor_m
         else
         {
             // Transform to new frame
-            float new_x = x + 500.0;
-            float new_y = y + 500.0;
-            float new_z = z + 500.0;
+            float new_x = x + 500.0f;
+            float new_y = y + 500.0f;
+            float new_z = z + 500.0f;
             // Convert values to millimeters
             float new_x_cm = new_x * precision_;
             float new_y_cm = new_y * precision_;
@@ -329,7 +329,7 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(sensor_m
             y_cm = y_cm & 0x000fffff;
             z_cm = z_cm & 0x000fffff;
             // Pack into a uint32_t
-            u_int64_t twentybit_point = 0;
+            uint64_t twentybit_point = 0;
             twentybit_point = twentybit_point | x_cm;
             twentybit_point = twentybit_point << 20;
             twentybit_point = twentybit_point | y_cm;
@@ -358,7 +358,7 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(sensor_m
         raw_data[3] = frame_type_header & 0x000000ff;
         for (size_t tidx = 0, didx = 4; tidx < twentybit_positions.size(); tidx++, didx+=8)
         {
-            u_int64_t current_point = twentybit_positions[tidx];
+            uint64_t current_point = twentybit_positions[tidx];
             raw_data[didx + 0] = current_point & 0x000000ff;
             current_point = current_point >> 8;
             raw_data[didx + 1] = current_point & 0x000000ff;
@@ -413,7 +413,7 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(sensor_m
         raw_data[3] = frame_type_header & 0x000000ff;
         for (size_t tidx = 0, didx = 4; tidx < twentybit_positions.size(); tidx++, didx+=8)
         {
-            u_int64_t current_point = twentybit_positions[tidx];
+            uint64_t current_point = twentybit_positions[tidx];
             raw_data[didx + 0] = current_point & 0x000000ff;
             current_point = current_point >> 8;
             raw_data[didx + 1] = current_point & 0x000000ff;
@@ -455,13 +455,13 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(sensor_m
     {
         ROS_INFO("Start PFRAME encode");
         // Compute the delta between new map and stored map
-        std::map<u_int64_t, int8_t> safe_state;
-        std::vector<u_int64_t> delta_data;
-        std::map<u_int64_t, int8_t>::iterator itr;
+        std::map<uint64_t, int8_t> safe_state;
+        std::vector<uint64_t> delta_data;
+        std::map<uint64_t, int8_t>::iterator itr;
         // Loop through the new state to find the *new points* in the latest pointcloud
         for (itr = new_state.begin(); itr != new_state.end(); ++itr)
         {
-            u_int64_t point = itr->first;
+            uint64_t point = itr->first;
             int8_t ctrl = itr->second;
             // First, add to the "safe state" that only contains valid points to store
             if (ctrl > 0)
@@ -475,14 +475,14 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(sensor_m
             if (ctrl > 0 && stored_ctrl == 0)
             {
                 // Add the new point to the delta as an "ADD" with 0b10 as the header
-                u_int64_t delta_point = point | 0xa000000000000000;
+                uint64_t delta_point = point | 0xa000000000000000;
                 delta_data.push_back(delta_point);
             }
         }
         // Loop through the old cloud to find the *old points* NOT in the latest pointcloud
         for (itr = stored_state_.begin(); itr != stored_state_.end(); ++itr)
         {
-            u_int64_t point = itr->first;
+            uint64_t point = itr->first;
             uint8_t ctrl = itr->second;
             // Check if the old point is also in the new pointcloud
             int8_t new_ctrl = new_state[point];
@@ -491,7 +491,7 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(sensor_m
             if (ctrl > 0 && new_ctrl == 0)
             {
                 // Add the new point to the delta as a "REMOVE" with 0b01 as the header
-                u_int64_t delta_point = point | 0xd000000000000000;
+                uint64_t delta_point = point | 0xd000000000000000;
                 delta_data.push_back(delta_point);
             }
         }
@@ -513,7 +513,7 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(sensor_m
             raw_data[3] = frame_type_header & 0x000000ff;
             for (size_t tidx = 0, didx = 4; tidx < twentybit_positions.size(); tidx++, didx+=8)
             {
-                u_int64_t current_point = twentybit_positions[tidx];
+                uint64_t current_point = twentybit_positions[tidx];
                 raw_data[didx + 0] = current_point & 0x000000ff;
                 current_point = current_point >> 8;
                 raw_data[didx + 1] = current_point & 0x000000ff;
@@ -577,7 +577,7 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(sensor_m
             raw_data[7] = decoded_data_length & 0x000000ff;
             for (size_t tidx = 0, didx = 8; tidx < delta_data.size(); tidx++, didx+=8)
             {
-                u_int64_t current_point = delta_data[tidx];
+                uint64_t current_point = delta_data[tidx];
                 raw_data[didx + 0] = current_point & 0x000000ff;
                 current_point = current_point >> 8;
                 raw_data[didx + 1] = current_point & 0x000000ff;

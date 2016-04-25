@@ -151,9 +151,9 @@ public:
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &st);
             datalink_msgs::CompressedPointCloud2 compressed = compressor_.compress_pointcloud2(cloud, compression_type_, filter_size_);
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &et);
-            float secs = (float)(et.tv_sec - st.tv_sec);
-            secs = secs + (float)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
-            float ratio = ((float)compressed.compressed_data.size() / (float)cloud.data.size()) * 100.0;
+            double secs = (double)(et.tv_sec - st.tv_sec);
+            secs = secs + (double)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
+            double ratio = ((double)compressed.compressed_data.size() / (double)cloud.data.size()) * 100.0;
             ROS_DEBUG("Compression of %f %% took %f seconds", ratio, secs);
             ROS_DEBUG("Original size: %f KB - Compressed size: %f KB", ((float)cloud.data.size() / 1000.0), ((float)compressed.compressed_data.size() / 1000.0));
             if (forward_ && (forward_rate_ == INFINITY))
@@ -217,7 +217,7 @@ int main(int argc, char** argv)
     {
         compression_id = datalink_msgs::CompressedPointCloud2::NONE;
     }
-    Pointcloud2LinkStartpoint startpoint(nh, default_rate, compression_id, filter_size, pointcloud_topic, link_topic, link_ctrl_service, rate_ctrl_service);
+    Pointcloud2LinkStartpoint startpoint(nh, default_rate, compression_id, (float)filter_size, pointcloud_topic, link_topic, link_ctrl_service, rate_ctrl_service);
     ROS_INFO("...startup complete");
     startpoint.loop();
     return 0;

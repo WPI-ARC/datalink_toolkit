@@ -25,7 +25,7 @@ void PC30Compressor::reset_decoder()
     state_packed_.clear();
 }
 
-PC30Compressor::FRAME_TYPES PC30Compressor::header_to_frame_type(uint32_t header_block)
+PC30Compressor::FRAME_TYPES PC30Compressor::header_to_frame_type(const uint32_t header_block) const
 {
     if (header_block == PC30Compressor::IFRAME_ID)
     {
@@ -41,7 +41,7 @@ PC30Compressor::FRAME_TYPES PC30Compressor::header_to_frame_type(uint32_t header
     }
 }
 
-uint32_t PC30Compressor::frame_type_to_header(PC30Compressor::FRAME_TYPES frame_type)
+uint32_t PC30Compressor::frame_type_to_header(const FRAME_TYPES frame_type) const
 {
     if (frame_type == PC30Compressor::IFRAME)
     {
@@ -57,7 +57,7 @@ uint32_t PC30Compressor::frame_type_to_header(PC30Compressor::FRAME_TYPES frame_
     }
 }
 
-sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(datalink_msgs::CompressedPointCloud2& compressed)
+sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(const datalink_msgs::CompressedPointCloud2& compressed)
 {
     std::vector<uint8_t> decompressed_encoded_data = ZlibHelpers::DecompressBytes(compressed.compressed_data);
     // Check if the encoded data is too short to contain a header
@@ -238,7 +238,7 @@ sensor_msgs::PointCloud2 PC30Compressor::decode_pointcloud2(datalink_msgs::Compr
     }
 }
 
-pcl::PointCloud<pcl::PointXYZ> PC30Compressor::generate_empty_pointcloud()
+pcl::PointCloud<pcl::PointXYZ> PC30Compressor::generate_empty_pointcloud() const
 {
     pcl::PointCloud<pcl::PointXYZ> empty_pointcloud;
     pcl::PointXYZ dummy_point(0.0, 0.0, 0.0);
@@ -246,7 +246,7 @@ pcl::PointCloud<pcl::PointXYZ> PC30Compressor::generate_empty_pointcloud()
     return empty_pointcloud;
 }
 
-pcl::PointCloud<pcl::PointXYZ> PC30Compressor::get_current_pointcloud()
+pcl::PointCloud<pcl::PointXYZ> PC30Compressor::get_current_pointcloud() const
 {
     pcl::PointCloud<pcl::PointXYZ> current_pointcloud;
     for (size_t tidx = 0; tidx < state_packed_.size(); tidx++)
@@ -259,13 +259,13 @@ pcl::PointCloud<pcl::PointXYZ> PC30Compressor::get_current_pointcloud()
         current_point = current_point >> 10;
         uint32_t x_cm = current_point & 0x000003ff;
         // Convert to meters
-        float x_m = (float)x_cm / 100.0;
-        float y_m = (float)y_cm / 100.0;
-        float z_m = (float)z_cm / 100.0;
+        float x_m = (float)x_cm / 100.0f;
+        float y_m = (float)y_cm / 100.0f;
+        float z_m = (float)z_cm / 100.0f;
         // Transform back to the original frame
-        float x = x_m - 5.0;
-        float y = y_m - 5.0;
-        float z = z_m - 5.0;
+        float x = x_m - 5.0f;
+        float y = y_m - 5.0f;
+        float z = z_m - 5.0f;
         // Turn into a PCL point
         pcl::PointXYZ new_point(x, y, z);
         current_pointcloud.push_back(new_point);
@@ -273,7 +273,7 @@ pcl::PointCloud<pcl::PointXYZ> PC30Compressor::get_current_pointcloud()
     return current_pointcloud;
 }
 
-datalink_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_msgs::PointCloud2& cloud)
+datalink_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(const sensor_msgs::PointCloud2& cloud)
 {
     // First, we convert the entire pointcloud to PC30 encoding
     pcl::PointCloud<pcl::PointXYZ> pcl_cloud;
@@ -297,13 +297,13 @@ datalink_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_m
         else
         {
             // Transform to new frame
-            float new_x = x + 5.0;
-            float new_y = y + 5.0;
-            float new_z = z + 5.0;
+            float new_x = x + 5.0f;
+            float new_y = y + 5.0f;
+            float new_z = z + 5.0f;
             // Convert values to centimeters
-            float new_x_cm = new_x * 100.0;
-            float new_y_cm = new_y * 100.0;
-            float new_z_cm = new_z * 100.0;
+            float new_x_cm = new_x * 100.0f;
+            float new_y_cm = new_y * 100.0f;
+            float new_z_cm = new_z * 100.0f;
             // Round to integer values
             uint32_t x_cm = snap(new_x_cm);
             uint32_t y_cm = snap(new_y_cm);
@@ -428,7 +428,7 @@ datalink_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(sensor_m
         // Loop through the new state to find the *new points* in the latest pointcloud
         for (itr = new_state.begin(); itr != new_state.end(); ++itr)
         {
-            u_int32_t point = itr->first;
+            uint32_t point = itr->first;
             int8_t ctrl = itr->second;
             // First, add to the "safe state" that only contains valid points to store
             if (ctrl > 0)

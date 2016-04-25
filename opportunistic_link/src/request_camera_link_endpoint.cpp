@@ -26,7 +26,7 @@ protected:
 
 public:
 
-    RequestCameraLinkEndpoint(ros::NodeHandle &n, std::string relay_topic, std::string data_service, std::string quality_ctrl_service, std::string rate_ctrl_service, int default_quality, double default_rate, bool override_timestamps, bool latched) : nh_(n), repub_rate_(20.0), it_(n)
+    RequestCameraLinkEndpoint(ros::NodeHandle &n, std::string relay_topic, std::string data_service, std::string quality_ctrl_service, std::string rate_ctrl_service, int default_quality, double default_rate, bool override_timestamps, bool latched) : nh_(n), it_(n), repub_rate_(20.0)
     {
         image_quality_ = (uint8_t)default_quality;
         forward_ = false;
@@ -93,9 +93,9 @@ public:
                 sensor_msgs::Image image = decompressor_.decompress_image(res.image, res.encoding);
                 sensor_msgs::CameraInfo info = res.info;
                 clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &et);
-                float secs = (float)(et.tv_sec - st.tv_sec);
-                secs = secs + (float)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
-                float ratio = ((float)image.data.size() / (float)res.image.data.size()) * 100.0;
+                double secs = (double)(et.tv_sec - st.tv_sec);
+                secs = secs + (double)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
+                double ratio = ((double)image.data.size() / (double)res.image.data.size()) * 100.0;
                 ROS_DEBUG("Decompression of %f %% took %f seconds", ratio, secs);
                 if (override_timestamps_)
                 {
@@ -118,7 +118,7 @@ public:
 
     bool quality_cb(datalink_msgs::QualityControl::Request& req, datalink_msgs::QualityControl::Response& res)
     {
-        if (req.Quality >= 0 && req.Quality <= 100)
+        if (req.Quality <= 100)
         {
             image_quality_ = (uint8_t)req.Quality;
             ROS_INFO("Set image quality to %ud", image_quality_);

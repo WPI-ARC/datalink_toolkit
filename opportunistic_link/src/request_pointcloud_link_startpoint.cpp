@@ -84,9 +84,9 @@ public:
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &st);
             res.cloud = compressor_.compress_pointcloud2(pointclouds_[0], compression_type_, req.filter_size);
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &et);
-            float secs = (float)(et.tv_sec - st.tv_sec);
-            secs = secs + (float)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
-            float ratio = ((float)res.cloud.compressed_data.size() / (float)pointclouds_[0].data.size()) * 100.0;
+            double secs = (double)(et.tv_sec - st.tv_sec);
+            secs = secs + (double)(et.tv_nsec - st.tv_nsec) / 1000000000.0;
+            double ratio = ((double)res.cloud.compressed_data.size() / (double)pointclouds_[0].data.size()) * 100.0;
             ROS_INFO("Compression of %f %% took %f seconds", ratio, secs);
             ROS_INFO("Original size: %f KB - Compressed size: %f KB", ((float)pointclouds_[0].data.size() / 1000.0), ((float)res.cloud.compressed_data.size() / 1000.0));
             // Clear the cache

@@ -18,7 +18,7 @@ void ImageHandler::reset_decoder()
     ;
 }
 
-sensor_msgs::Image ImageHandler::decompress_image(sensor_msgs::CompressedImage& compressed, std::string encoding)
+sensor_msgs::Image ImageHandler::decompress_image(const sensor_msgs::CompressedImage& compressed, const std::string& encoding)
 {
     sensor_msgs::Image decompressed;
     cv::Mat decoded = cv::imdecode(compressed.data, CV_LOAD_IMAGE_ANYCOLOR);
@@ -28,7 +28,7 @@ sensor_msgs::Image ImageHandler::decompress_image(sensor_msgs::CompressedImage& 
     return decompressed;
 }
 
-sensor_msgs::CompressedImage ImageHandler::compress_image(const sensor_msgs::Image& image, int quality)
+sensor_msgs::CompressedImage ImageHandler::compress_image(const sensor_msgs::Image& image, const int quality)
 {
     sensor_msgs::CompressedImage compressed;
     compressed.header.frame_id = image.header.frame_id;

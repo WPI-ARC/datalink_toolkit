@@ -112,7 +112,7 @@ public:
             intermediate = cv_ptr->image;
         }
         // Resize image
-        if (resized_width_ < image->width && resized_height_ < image->height)
+        if (resized_width_ < (int)(image->width) && resized_height_ < (int)(image->height))
         {
             // If we're resizing smaller, use CV_INTER_AREA interpolation
             cv::resize(intermediate, resized, resized.size(), 0.0, 0.0, CV_INTER_AREA);
