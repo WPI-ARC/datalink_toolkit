@@ -46,6 +46,7 @@ public:
 
     void loop()
     {
+        ros::Rate fallback_rate(100.0);
         while (ros::ok())
         {
             if (forward_ && (forward_rate_ == INFINITY))
@@ -60,7 +61,7 @@ public:
                     ROS_WARN("Failure requesting a camera image, unable to republish");
                 }
             }
-            if (forward_ && (forward_rate_ != INFINITY) && (forward_rate_ != 0.0))
+            else if (forward_ && (forward_rate_ != INFINITY) && (forward_rate_ != 0.0))
             {
                 ROS_INFO("Requesting a camera image");
                 try
@@ -72,6 +73,10 @@ public:
                     ROS_WARN("Failure requesting a camera image, unable to republish");
                 }
                 repub_rate_.sleep();
+            }
+            else
+            {
+                fallback_rate.sleep();
             }
             ros::spinOnce();
         }
