@@ -31,7 +31,7 @@ public:
         image_quality_ = (uint8_t)default_quality;
         forward_ = false;
         forward_rate_ = default_rate;
-        if ((forward_rate_ != INFINITY) && (forward_rate_ > 0.0) && (isnan(forward_rate_) == false))
+        if ((forward_rate_ != INFINITY) && (forward_rate_ > 0.0) && (std::isnan(forward_rate_) == false))
         {
             repub_rate_ = ros::Rate(forward_rate_);
         }
@@ -139,7 +139,7 @@ public:
 
     bool rate_cb(datalink_msgs::RateControl::Request& req, datalink_msgs::RateControl::Response& res)
     {
-        if (req.Rate > 0.0 && (req.Rate != INFINITY) && (isnan(req.Rate) == false))
+        if (req.Rate > 0.0 && (req.Rate != INFINITY) && (std::isnan(req.Rate) == false))
         {
             repub_rate_ = ros::Rate(req.Rate);
             forward_rate_ = req.Rate;

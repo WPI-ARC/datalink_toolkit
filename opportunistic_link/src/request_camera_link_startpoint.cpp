@@ -24,7 +24,7 @@ public:
 
     RequestCameraLinkStartpoint(ros::NodeHandle &n, std::string camera_topic, std::string data_service, const double loop_rate) : nh_(n), it_(n), loop_rate_(DEFAULT_LOOP_RATE)
     {
-        if ((loop_rate != INFINITY) && (loop_rate > 0.0) && (isnan(loop_rate) == false))
+        if ((loop_rate != INFINITY) && (loop_rate > 0.0) && (std::isnan(loop_rate) == false))
         {
             loop_rate_ = ros::Rate(loop_rate);
         }

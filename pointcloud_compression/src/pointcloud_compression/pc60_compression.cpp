@@ -9,8 +9,6 @@
 #include <pointcloud_compression/zlib_helpers.hpp>
 #include <pointcloud_compression/pc60_compression.h>
 
-#define snap(x) ((x)>=0?(int)((x)+0.5):(int)((x)-0.5))
-
 using namespace pc60_compression;
 
 void PC60Compressor::reset_encoder()
@@ -306,7 +304,7 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(const se
         {
             ROS_DEBUG("Ignoring point outside bounding box");
         }
-        else if (isnan(x) || isnan(y) || isnan(z))
+        else if (std::isnan(x) || std::isnan(y) || std::isnan(z))
         {
             ROS_DEBUG("Ignoring point with NAN coordinates");
         }
@@ -317,24 +315,24 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(const se
             float new_y = y + 500.0f;
             float new_z = z + 500.0f;
             // Convert values to millimeters
-            float new_x_cm = new_x * precision_;
-            float new_y_cm = new_y * precision_;
-            float new_z_cm = new_z * precision_;
+            float new_x_mm = new_x * precision_;
+            float new_y_mm = new_y * precision_;
+            float new_z_mm = new_z * precision_;
             // Round to integer values
-            uint32_t x_cm = snap(new_x_cm);
-            uint32_t y_cm = snap(new_y_cm);
-            uint32_t z_cm = snap(new_z_cm);
-            // Drop to 10-bit precision
-            x_cm = x_cm & 0x000fffff;
-            y_cm = y_cm & 0x000fffff;
-            z_cm = z_cm & 0x000fffff;
+            uint32_t x_mm = (uint32_t)round(new_x_mm);
+            uint32_t y_mm = (uint32_t)round(new_y_mm);
+            uint32_t z_mm = (uint32_t)round(new_z_mm);
+            // Drop to 20-bit precision
+            x_mm = x_mm & 0x000fffff;
+            y_mm = y_mm & 0x000fffff;
+            z_mm = z_mm & 0x000fffff;
             // Pack into a uint32_t
             uint64_t twentybit_point = 0;
-            twentybit_point = twentybit_point | x_cm;
+            twentybit_point = twentybit_point | x_mm;
             twentybit_point = twentybit_point << 20;
-            twentybit_point = twentybit_point | y_cm;
+            twentybit_point = twentybit_point | y_mm;
             twentybit_point = twentybit_point << 20;
-            twentybit_point = twentybit_point | z_cm;
+            twentybit_point = twentybit_point | z_mm;
             twentybit_positions.push_back(twentybit_point);
             new_state[twentybit_point] = 1;
         }
@@ -483,7 +481,7 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(const se
         for (itr = stored_state_.begin(); itr != stored_state_.end(); ++itr)
         {
             uint64_t point = itr->first;
-            uint8_t ctrl = itr->second;
+            int8_t ctrl = itr->second;
             // Check if the old point is also in the new pointcloud
             int8_t new_ctrl = new_state[point];
             // If the new ctrl is greater than zero, it's being stored

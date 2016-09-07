@@ -2,7 +2,7 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CompressedImage.h>
 #include <opportunistic_link/image_compression.h>
-#include <opencv/cv.h>
+#include <opencv2/opencv.hpp>
 #include <opencv/highgui.h>
 #include <cv_bridge/cv_bridge.h>
 

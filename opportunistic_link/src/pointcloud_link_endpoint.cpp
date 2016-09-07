@@ -29,7 +29,7 @@ public:
 
     Pointcloud2LinkEndpoint(ros::NodeHandle &n, std::string relay_topic, std::string link_topic, std::string link_ctrl_service, bool override_timestamps, const double loop_rate, bool latched) : nh_(n), loop_rate_(DEFAULT_LOOP_RATE)
     {
-        if ((loop_rate != INFINITY) && (loop_rate > 0.0) && (isnan(loop_rate) == false))
+        if ((loop_rate != INFINITY) && (loop_rate > 0.0) && (std::isnan(loop_rate) == false))
         {
             loop_rate_ = ros::Rate(loop_rate);
         }

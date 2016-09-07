@@ -29,12 +29,12 @@ public:
     {
         forward_ = false;
         filter_size_ = filter_size;
-        if (!((filter_size_ != INFINITY) && (filter_size_ >= 0.0) && (isnan(filter_size_) == false)))
+        if (!((filter_size_ != INFINITY) && (filter_size_ >= 0.0) && (std::isnan(filter_size_) == false)))
         {
             filter_size_ = 0.0;
         }
         forward_rate_ = default_rate;
-        if ((forward_rate_ != INFINITY) && (forward_rate_ > 0.0) && (isnan(forward_rate_) == false))
+        if ((forward_rate_ != INFINITY) && (forward_rate_ > 0.0) && (std::isnan(forward_rate_) == false))
         {
             repub_rate_ = ros::Rate(forward_rate_);
         }
@@ -104,7 +104,7 @@ public:
 
     bool rate_control_cb(datalink_msgs::RateControl::Request& req, datalink_msgs::RateControl::Response& res)
     {
-        if (req.Rate > 0.0 && (req.Rate != INFINITY) && (isnan(req.Rate) == false))
+        if (req.Rate > 0.0 && (req.Rate != INFINITY) && (std::isnan(req.Rate) == false))
         {
             repub_rate_ = ros::Rate(req.Rate);
             forward_rate_ = req.Rate;

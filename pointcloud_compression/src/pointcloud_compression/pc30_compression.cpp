@@ -9,8 +9,6 @@
 #include <pointcloud_compression/zlib_helpers.hpp>
 #include <pointcloud_compression/pc30_compression.h>
 
-#define snap(x) ((x)>=0?(int)((x)+0.5):(int)((x)-0.5))
-
 using namespace pc30_compression;
 
 void PC30Compressor::reset_encoder()
@@ -290,7 +288,7 @@ datalink_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(const se
         {
             ROS_DEBUG("Ignoring point outside bounding box");
         }
-        else if (isnan(x) || isnan(y) || isnan(z))
+        else if (std::isnan(x) || std::isnan(y) || std::isnan(z))
         {
             ROS_DEBUG("Ignoring point with NAN coordinates");
         }
@@ -305,9 +303,9 @@ datalink_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(const se
             float new_y_cm = new_y * 100.0f;
             float new_z_cm = new_z * 100.0f;
             // Round to integer values
-            uint32_t x_cm = snap(new_x_cm);
-            uint32_t y_cm = snap(new_y_cm);
-            uint32_t z_cm = snap(new_z_cm);
+            uint32_t x_cm = (uint32_t)round(new_x_cm);
+            uint32_t y_cm = (uint32_t)round(new_y_cm);
+            uint32_t z_cm = (uint32_t)round(new_z_cm);
             // Drop to 10-bit precision
             x_cm = x_cm & 0x000003ff;
             y_cm = y_cm & 0x000003ff;
@@ -450,7 +448,7 @@ datalink_msgs::CompressedPointCloud2 PC30Compressor::encode_pointcloud2(const se
         for (itr = stored_state_.begin(); itr != stored_state_.end(); ++itr)
         {
             uint32_t point = itr->first;
-            uint8_t ctrl = itr->second;
+            int8_t ctrl = itr->second;
             // Check if the old point is also in the new pointcloud
             int8_t new_ctrl = new_state[point];
             // If the new ctrl is greater than zero, it's being stored
