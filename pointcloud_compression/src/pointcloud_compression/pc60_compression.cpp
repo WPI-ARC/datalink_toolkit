@@ -9,7 +9,8 @@
 #include <pointcloud_compression/zlib_helpers.hpp>
 #include <pointcloud_compression/pc60_compression.h>
 
-#define snap(x) ((x)>=0?(int)((x)+0.5):(int)((x)-0.5))
+#define snap(x) ((x >= 0) ? static_cast<uint32_t>(x+0.5) : static_cast<uint32_t>(x-0.5))
+
 
 using namespace pc60_compression;
 
@@ -306,7 +307,7 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(const se
         {
             ROS_DEBUG("Ignoring point outside bounding box");
         }
-        else if (isnan(x) || isnan(y) || isnan(z))
+        else if (std::isnan(x) || std::isnan(y) || std::isnan(z))
         {
             ROS_DEBUG("Ignoring point with NAN coordinates");
         }
@@ -483,7 +484,7 @@ datalink_msgs::CompressedPointCloud2 PC60Compressor::encode_pointcloud2(const se
         for (itr = stored_state_.begin(); itr != stored_state_.end(); ++itr)
         {
             uint64_t point = itr->first;
-            uint8_t ctrl = itr->second;
+            uint8_t ctrl = static_cast<uint8_t>(itr->second);
             // Check if the old point is also in the new pointcloud
             int8_t new_ctrl = new_state[point];
             // If the new ctrl is greater than zero, it's being stored
