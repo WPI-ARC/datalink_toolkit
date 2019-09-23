@@ -10,10 +10,6 @@ namespace image_compression
 {
     class ImageHandler
     {
-    protected:
-
-        ;
-
     public:
 
         ImageHandler() {}
