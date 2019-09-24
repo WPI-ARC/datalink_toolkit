@@ -22,9 +22,12 @@ sensor_msgs::Image ImageHandler::decompress_image(const sensor_msgs::CompressedI
 {
     sensor_msgs::Image decompressed;
     cv::Mat decoded = cv::imdecode(compressed.data, CV_LOAD_IMAGE_UNCHANGED);
-    if(decoded.data==NULL) {
-        ROS_WARN("Decoding unsuccessful");
-    } else {
+    if(decoded.data == NULL)
+    {
+        throw std::runtime_error("OpenCV image decoding failed");
+    }
+    else
+    {
         ROS_DEBUG_STREAM("Decoding successful, rows=" << decoded.rows << ", cols=" << decoded.cols << ", opencv type=" << decoded.type());
     }
     cv_bridge::CvImage converted;
@@ -42,22 +45,26 @@ sensor_msgs::CompressedImage ImageHandler::compress_image(const sensor_msgs::Ima
     cv_ptr = cv_bridge::toCvCopy(image);
     cv::Mat cv_image = cv_ptr->image;
     std::vector<int> encoding_params;
-    bool ret;
+    bool ret = false;
     ROS_DEBUG_STREAM("Image encoding: " << image.encoding);
-    if(image.encoding=="16UC1") {
+    if(image.encoding == "16UC1") {
         ROS_DEBUG("Encoding in png format");
         ret = cv::imencode(".png", cv_image, compressed.data, encoding_params);
-        compressed.format="png";
-    } else if(image.encoding=="32FC1") {
+        compressed.format = "png";
+    }
+    else if(image.encoding == "32FC1")
+    {
         ROS_DEBUG("Encoding in tiff format");
         ret = cv::imencode(".tiff", cv_image, compressed.data, encoding_params);
-        // jpeg and png are the only acceptable values for the format field, so it is not set here
-    } else {
+        compressed.format = "tiff";
+    }
+    else
+    {
         ROS_DEBUG("Encoding in jpeg format");
         encoding_params.push_back(CV_IMWRITE_JPEG_QUALITY);
         encoding_params.push_back(quality);
         ret = cv::imencode(".jpg", cv_image, compressed.data, encoding_params);
-        compressed.format="jpeg";
+        compressed.format = "jpeg";
     }
     if (ret)
     {
